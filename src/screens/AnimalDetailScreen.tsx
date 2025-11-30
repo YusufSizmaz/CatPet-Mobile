@@ -1,24 +1,499 @@
-import React from 'react'
-import { View, Text, StyleSheet } from 'react-native'
+import React, { useState } from 'react'
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, ActivityIndicator, Share, Linking } from 'react-native'
+import { useRoute, useNavigation } from '@react-navigation/native'
+import { useAnimal } from '../hooks/useAnimals'
+import { useAuth } from '../contexts/AuthContext'
+import { ANIMAL_TYPE_LABELS, GENDER_LABELS } from '../utils/constants'
+import { Ionicons } from '@expo/vector-icons'
 
 export default function AnimalDetailScreen() {
+  const route = useRoute()
+  const navigation = useNavigation()
+  const { id } = route.params as { id: number }
+  const { animal, loading, error } = useAnimal(id)
+  const { user } = useAuth()
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0)
+  const [isFavorite, setIsFavorite] = useState(false)
+
+  const hashName = (name: string | undefined | null): string => {
+    if (!name || name.trim().length === 0) return '***'
+    const trimmed = name.trim()
+    return trimmed[0].toUpperCase() + '***'
+  }
+
+  const isLoggedIn = !!user
+
+  const getOwnerDisplayName = (): string => {
+    if (isLoggedIn) {
+      const firstName = animal?.owner?.firstName || ''
+      const lastName = animal?.owner?.lastName || ''
+      const fullName = `${firstName} ${lastName}`.trim()
+      return fullName || 'İlan Sahibi'
+    } else {
+      const firstName = animal?.owner?.firstName
+      const lastName = animal?.owner?.lastName
+      const hashedFirstName = hashName(firstName)
+      const hashedLastName = hashName(lastName)
+      return `${hashedFirstName} ${hashedLastName}`.trim() || '*** ***'
+    }
+  }
+
+  const handleShare = async () => {
+    try {
+      await Share.share({
+        message: `${animal?.name} - Sahiplenme İlanı\n${animal?.description}`,
+        title: `${animal?.name} - Sahiplenme İlanı`,
+      })
+    } catch (error) {
+      console.error('Share error:', error)
+    }
+  }
+
+  const handleCall = () => {
+    // TODO: Implement phone call
+    Linking.openURL('tel:+905551234567')
+  }
+
+  const handleMessage = () => {
+    // TODO: Implement message
+    Linking.openURL('sms:+905551234567')
+  }
+
+  if (loading) {
+    return (
+      <View style={styles.centerContainer}>
+        <ActivityIndicator size="large" color="#FF7A00" />
+        <Text style={styles.loadingText}>Yükleniyor...</Text>
+      </View>
+    )
+  }
+
+  if (error || !animal) {
+    return (
+      <View style={styles.centerContainer}>
+        <Text style={styles.errorText}>{error || 'Hayvan bulunamadı'}</Text>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Text style={styles.backButtonText}>Geri Dön</Text>
+        </TouchableOpacity>
+      </View>
+    )
+  }
+
+  const mainImage = animal.images && animal.images[selectedImageIndex]
+    ? animal.images[selectedImageIndex]
+    : animal.images && animal.images[0]
+    ? animal.images[0]
+    : 'https://via.placeholder.com/800x450'
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Hayvan Detayı</Text>
-    </View>
+    <ScrollView style={styles.container}>
+      {/* Images */}
+      <View style={styles.imageSection}>
+        <Image source={{ uri: mainImage }} style={styles.mainImage} resizeMode="cover" />
+        {animal.images && animal.images.length > 1 && (
+          <ScrollView horizontal style={styles.thumbnailContainer} showsHorizontalScrollIndicator={false}>
+            {animal.images.slice(0, 4).map((img, i) => (
+              <TouchableOpacity
+                key={i}
+                style={[
+                  styles.thumbnail,
+                  selectedImageIndex === i && styles.thumbnailActive,
+                ]}
+                onPress={() => setSelectedImageIndex(i)}
+              >
+                <Image source={{ uri: img }} style={styles.thumbnailImage} resizeMode="cover" />
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        )}
+      </View>
+
+      <View style={styles.content}>
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.titleContainer}>
+            <Text style={styles.title}>{animal.name}</Text>
+            <View style={styles.location}>
+              <Ionicons name="location-outline" size={16} color="#666" />
+              <Text style={styles.locationText}>
+                {animal.city}{animal.district ? ` / ${animal.district}` : ''}
+              </Text>
+            </View>
+          </View>
+          <View style={styles.actions}>
+            <TouchableOpacity style={styles.actionButton} onPress={handleShare}>
+              <Ionicons name="share-outline" size={20} color="#FF7A00" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={() => setIsFavorite(!isFavorite)}
+            >
+              <Ionicons
+                name={isFavorite ? 'heart' : 'heart-outline'}
+                size={20}
+                color={isFavorite ? '#FF7A00' : '#666'}
+              />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* About */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>{animal.name} Hakkında</Text>
+          <Text style={styles.description}>{animal.description}</Text>
+        </View>
+
+        {/* Details */}
+        <View style={styles.detailsCard}>
+          <Text style={styles.detailsTitle}>Detaylı Bilgiler</Text>
+          <View style={styles.detailsGrid}>
+            {[
+              { icon: 'cake-outline', label: 'Yaş', value: `${animal.age} Yaşında` },
+              { icon: 'paw-outline', label: 'Cins', value: animal.breed || '-' },
+              {
+                icon: animal.gender === 'female' ? 'female-outline' : 'male-outline',
+                label: 'Cinsiyet',
+                value: GENDER_LABELS[animal.gender] || animal.gender,
+              },
+              {
+                icon: 'medical-outline',
+                label: 'Kısırlaştırma',
+                value: animal.isSpayed ? 'Kısırlaştırılmış' : 'Kısırlaştırılmamış',
+              },
+              {
+                icon: 'shield-checkmark-outline',
+                label: 'Aşı Durumu',
+                value: animal.isVaccinated ? 'Tüm aşıları tam' : 'Aşıları eksik',
+              },
+              {
+                icon: 'heart-outline',
+                label: 'Sağlık Durumu',
+                value: animal.healthStatus || '-',
+              },
+            ].map((info) => (
+              <View key={info.label} style={styles.detailItem}>
+                <Ionicons name={info.icon as any} size={20} color="#FF7A00" />
+                <View style={styles.detailText}>
+                  <Text style={styles.detailLabel}>{info.label}</Text>
+                  <Text style={styles.detailValue}>{info.value}</Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        {/* Characteristics */}
+        {animal.characteristics && (
+          <View style={styles.detailsCard}>
+            <Text style={styles.detailsTitle}>
+              Karakter Özellikleri ({ANIMAL_TYPE_LABELS[animal.type] || animal.type})
+            </Text>
+            <View style={styles.characteristicsGrid}>
+              {[
+                { key: 'getsAlongWithHumans', text: 'İnsanlarla İyi Anlaşır', positive: true },
+                { key: 'getsAlongWithChildren', text: 'Çocuklarla Anlaşır', positive: true },
+                { key: 'getsAlongWithCats', text: 'Diğer Kedilerle Anlaşır', positive: true },
+                { key: 'getsAlongWithDogs', text: 'Köpeklerle Anlaşır', positive: true },
+                { key: 'isHouseTrained', text: 'Tuvalet Eğitimi Var', positive: true },
+                { key: 'isPlayful', text: 'Oyuncu', positive: true },
+              ].map((trait) => {
+                const value = animal.characteristics?.[trait.key as keyof typeof animal.characteristics]
+                const displayValue = trait.positive ? value : !value
+                return (
+                  <View key={trait.key} style={styles.characteristicItem}>
+                    <Ionicons
+                      name={displayValue ? 'checkmark-circle' : 'close-circle'}
+                      size={20}
+                      color={displayValue ? '#10b981' : '#ef4444'}
+                    />
+                    <Text style={styles.characteristicText}>{trait.text}</Text>
+                  </View>
+                )
+              })}
+            </View>
+          </View>
+        )}
+
+        {/* Owner Info */}
+        <View style={styles.ownerCard}>
+          <View style={styles.ownerHeader}>
+            <Image
+              source={{
+                uri: animal.owner?.profilePhoto || 'https://via.placeholder.com/100',
+              }}
+              style={[
+                styles.ownerPhoto,
+                !isLoggedIn && styles.ownerPhotoBlurred,
+              ]}
+            />
+            <View style={styles.ownerInfo}>
+              <Text style={styles.ownerName}>{getOwnerDisplayName()}</Text>
+              <Text style={styles.ownerLabel}>İlan Sahibi</Text>
+            </View>
+          </View>
+          <View style={styles.contactButtons}>
+            <TouchableOpacity style={styles.contactButton} onPress={handleCall}>
+              <Ionicons name="call-outline" size={20} color="#fff" />
+              <Text style={styles.contactButtonText}>Telefonu Göster</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.contactButton, styles.contactButtonOutline]}
+              onPress={handleMessage}
+            >
+              <Ionicons name="mail-outline" size={20} color="#FF7A00" />
+              <Text style={[styles.contactButtonText, styles.contactButtonTextOutline]}>
+                Mesaj Gönder
+              </Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.note}>
+            <Text style={styles.noteText}>
+              <Text style={styles.noteBold}>Sahiplenme Notu:</Text> Sahiplendirme, takip koşulu ve
+              sahiplendirme sözleşmesi ile yapılacaktır.
+            </Text>
+          </View>
+        </View>
+      </View>
+    </ScrollView>
   )
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
     backgroundColor: '#fff',
   },
+  centerContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 40,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: '#666',
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#ef4444',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  backButton: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+    backgroundColor: '#FF7A00',
+  },
+  backButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  imageSection: {
+    marginBottom: 20,
+  },
+  mainImage: {
+    width: '100%',
+    height: 300,
+    backgroundColor: '#f0f0f0',
+  },
+  thumbnailContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    gap: 12,
+  },
+  thumbnail: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: 'transparent',
+    overflow: 'hidden',
+  },
+  thumbnailActive: {
+    borderColor: '#FF7A00',
+  },
+  thumbnailImage: {
+    width: '100%',
+    height: '100%',
+  },
+  content: {
+    padding: 20,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 24,
+  },
+  titleContainer: {
+    flex: 1,
+  },
   title: {
-    fontSize: 24,
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#1a1a1a',
+    marginBottom: 8,
+  },
+  location: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  locationText: {
+    fontSize: 14,
+    color: '#666',
+  },
+  actions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  actionButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#FFF7F0',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  section: {
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#1a1a1a',
+    marginBottom: 12,
+  },
+  description: {
+    fontSize: 16,
+    lineHeight: 24,
+    color: '#666',
+  },
+  detailsCard: {
+    backgroundColor: '#f9f9f9',
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 20,
+  },
+  detailsTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1a1a1a',
+    marginBottom: 16,
+  },
+  detailsGrid: {
+    gap: 16,
+  },
+  detailItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  detailText: {
+    flex: 1,
+  },
+  detailLabel: {
+    fontSize: 12,
+    color: '#999',
+    marginBottom: 2,
+  },
+  detailValue: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1a1a1a',
+  },
+  characteristicsGrid: {
+    gap: 12,
+  },
+  characteristicItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  characteristicText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#1a1a1a',
+  },
+  ownerCard: {
+    backgroundColor: '#f9f9f9',
+    borderRadius: 12,
+    padding: 20,
+    marginTop: 8,
+  },
+  ownerHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 20,
+  },
+  ownerPhoto: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#e5e5e5',
+  },
+  ownerPhotoBlurred: {
+    opacity: 0.5,
+  },
+  ownerInfo: {
+    flex: 1,
+  },
+  ownerName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#1a1a1a',
+    marginBottom: 2,
+  },
+  ownerLabel: {
+    fontSize: 12,
+    color: '#666',
+  },
+  contactButtons: {
+    gap: 12,
+    marginBottom: 16,
+  },
+  contactButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FF7A00',
+    paddingVertical: 14,
+    borderRadius: 8,
+    gap: 8,
+  },
+  contactButtonOutline: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#FF7A00',
+  },
+  contactButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  contactButtonTextOutline: {
+    color: '#FF7A00',
+  },
+  note: {
+    backgroundColor: '#FFF7F0',
+    padding: 12,
+    borderRadius: 8,
+  },
+  noteText: {
+    fontSize: 12,
+    color: '#FF7A00',
+    textAlign: 'center',
+    lineHeight: 18,
+  },
+  noteBold: {
     fontWeight: 'bold',
   },
 })
-

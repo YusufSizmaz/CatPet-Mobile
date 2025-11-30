@@ -7,9 +7,20 @@ export interface Animal {
   age?: number
   description?: string
   city: string
+  district?: string
   address?: string
   images?: string[]
   healthStatus?: string
+  isSpayed?: boolean
+  isVaccinated?: boolean
+  characteristics?: {
+    getsAlongWithHumans?: boolean
+    getsAlongWithChildren?: boolean
+    getsAlongWithCats?: boolean
+    getsAlongWithDogs?: boolean
+    isHouseTrained?: boolean
+    isPlayful?: boolean
+  }
   ownerId: number
   owner?: {
     id: number

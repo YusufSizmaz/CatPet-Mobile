@@ -5,11 +5,11 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut as firebaseSignOut,
-  GoogleAuthProvider,
-  signInWithCredential,
+  updateProfile,
 } from 'firebase/auth'
 import { auth } from '../services/firebase'
 import { authAPI } from '../services/api'
+import { signInWithGoogle } from '../services/googleAuth'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { User } from '../types/user.types'
 
@@ -67,16 +67,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const register = async (email: string, password: string, firstName: string, lastName: string) => {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password)
     // Update profile with display name
-    // Note: updateProfile is not available in React Native Firebase Auth
-    // We'll handle this in the backend sync
+    try {
+      await updateProfile(userCredential.user, {
+        displayName: `${firstName} ${lastName}`,
+      })
+    } catch (error) {
+      console.error('Failed to update profile:', error)
+    }
     await syncUserWithBackend(userCredential.user)
   }
 
   const loginWithGoogle = async () => {
-    // Google Sign-In implementation for React Native
-    // This requires @react-native-google-signin/google-signin package
-    // For now, we'll leave it as a placeholder
-    throw new Error('Google Sign-In not yet implemented')
+    const userCredential = await signInWithGoogle()
+    await syncUserWithBackend(userCredential.user)
   }
 
   const logout = async () => {

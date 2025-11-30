@@ -5,6 +5,10 @@ export interface User {
   email: string
   fireBaseUUID?: string
   profilePhoto?: string
+  description?: string
+  city?: string
+  phone?: string
+  nickname?: string
   verify: boolean
   isActive: boolean
   createdAt: string

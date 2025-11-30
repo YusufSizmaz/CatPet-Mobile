@@ -177,3 +177,20 @@ export const usersAPI = {
   }),
 }
 
+// User Settings API
+export const userSettingsAPI = {
+  getByUserId: (userId: number) => fetchAPI<any>(`/user-settings/user/${userId}`, { method: 'GET' }),
+  
+  updateByUserId: (userId: number, data: { showGooglePhoto?: boolean; useNickname?: boolean }) => 
+    fetchAPI<any>(`/user-settings/user/${userId}`, {
+      method: 'PUT',
+      data,
+    }),
+  
+  update: (id: number, data: { showGooglePhoto?: boolean; useNickname?: boolean }) => 
+    fetchAPI<any>(`/user-settings/${id}`, {
+      method: 'PUT',
+      data,
+    }),
+}
+

@@ -12,6 +12,10 @@ import FoodPointsScreen from '../screens/FoodPointsScreen'
 import BlogScreen from '../screens/BlogScreen'
 import ProfileScreen from '../screens/ProfileScreen'
 import LoginScreen from '../screens/LoginScreen'
+import RegisterScreen from '../screens/RegisterScreen'
+import AboutScreen from '../screens/AboutScreen'
+import LostAnimalScreen from '../screens/LostAnimalScreen'
+import BlogDetailScreen from '../screens/BlogDetailScreen'
 
 const Stack = createNativeStackNavigator()
 const Tab = createBottomTabNavigator()
@@ -71,13 +75,35 @@ export default function AppNavigator() {
               component={AnimalDetailScreen}
               options={{ title: 'Hayvan Detayı' }}
             />
+            <Stack.Screen 
+              name="About" 
+              component={AboutScreen}
+              options={{ title: 'Hakkımızda' }}
+            />
+            <Stack.Screen 
+              name="LostAnimal" 
+              component={LostAnimalScreen}
+              options={{ title: 'Kayıp İlanı' }}
+            />
+            <Stack.Screen 
+              name="BlogDetail" 
+              component={BlogDetailScreen}
+              options={{ title: 'Blog Yazısı' }}
+            />
           </>
         ) : (
-          <Stack.Screen 
-            name="Login" 
-            component={LoginScreen}
-            options={{ headerShown: false }}
-          />
+          <>
+            <Stack.Screen 
+              name="Login" 
+              component={LoginScreen}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen 
+              name="Register" 
+              component={RegisterScreen}
+              options={{ title: 'Kayıt Ol' }}
+            />
+          </>
         )}
       </Stack.Navigator>
     </NavigationContainer>
