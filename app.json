@@ -1,0 +1,43 @@
+{
+  "expo": {
+    "name": "CatPet",
+    "slug": "catpet-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.catpet.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.catpet.app"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "scheme": "catpet",
+    "extra": {
+      "apiUrl": "http://localhost:3002",
+      "firebaseApiKey": "AIzaSyBWx-EFaZlZi7Wq6nslnSPrqrDZEif4NUo",
+      "firebaseAuthDomain": "catpetapp.firebaseapp.com",
+      "firebaseProjectId": "catpetapp",
+      "firebaseStorageBucket": "catpetapp.firebasestorage.app",
+      "firebaseMessagingSenderId": "256950851198",
+      "firebaseAppId": "1:256950851198:web:bdcb5ed2f6a74ae7602a2f"
+    }
+  }
+}
+
