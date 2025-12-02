@@ -6,6 +6,8 @@ export interface FoodPoint {
   address?: string
   latitude: number
   longitude: number
+  animalType?: 'cat' | 'dog' | 'all'
+  isActive?: boolean
   needsFood?: boolean
   description?: string
   createdAt: string
@@ -13,8 +15,9 @@ export interface FoodPoint {
 }
 
 export interface FoodPointFilters {
-  type?: string
+  type?: 'feeding' | 'supply'
   city?: string
+  animalType?: 'cat' | 'dog' | 'all'
   isActive?: boolean
   needsFood?: boolean
 }

@@ -16,6 +16,7 @@ import RegisterScreen from '../screens/RegisterScreen'
 import AboutScreen from '../screens/AboutScreen'
 import LostAnimalScreen from '../screens/LostAnimalScreen'
 import BlogDetailScreen from '../screens/BlogDetailScreen'
+import ForumDetailScreen from '../screens/ForumDetailScreen'
 
 const Stack = createNativeStackNavigator()
 const Tab = createBottomTabNavigator()
@@ -89,6 +90,11 @@ export default function AppNavigator() {
               name="BlogDetail" 
               component={BlogDetailScreen}
               options={{ title: 'Blog Yazısı' }}
+            />
+            <Stack.Screen 
+              name="ForumDetail" 
+              component={ForumDetailScreen}
+              options={{ title: 'Forum Konusu' }}
             />
           </>
         ) : (

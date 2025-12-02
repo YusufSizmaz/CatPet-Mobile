@@ -1,19 +1,39 @@
-import React, { useState } from 'react'
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, ActivityIndicator, Share, Linking } from 'react-native'
+import React, { useState, useEffect } from 'react'
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, ActivityIndicator, Share, Linking, Alert } from 'react-native'
 import { useRoute, useNavigation } from '@react-navigation/native'
 import { useAnimal } from '../hooks/useAnimals'
 import { useAuth } from '../contexts/AuthContext'
 import { ANIMAL_TYPE_LABELS, GENDER_LABELS } from '../utils/constants'
 import { Ionicons } from '@expo/vector-icons'
+import { favoritesAPI, animalsAPIExtended } from '../services/api'
 
 export default function AnimalDetailScreen() {
   const route = useRoute()
   const navigation = useNavigation()
   const { id } = route.params as { id: number }
   const { animal, loading, error } = useAnimal(id)
-  const { user } = useAuth()
+  const { user, backendUser } = useAuth()
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
   const [isFavorite, setIsFavorite] = useState(false)
+  const [loadingFavorite, setLoadingFavorite] = useState(false)
+  const [loadingPhone, setLoadingPhone] = useState(false)
+
+  // Load favorite status
+  useEffect(() => {
+    const loadFavoriteStatus = async () => {
+      if (!user || !animal?.id) return
+      
+      try {
+        const token = await user.getIdToken()
+        const result = await favoritesAPI.checkFavorite(animal.id, token)
+        setIsFavorite(result.isFavorite)
+      } catch (error) {
+        console.error('Error loading favorite status:', error)
+      }
+    }
+
+    loadFavoriteStatus()
+  }, [user, animal?.id])
 
   const hashName = (name: string | undefined | null): string => {
     if (!name || name.trim().length === 0) return '***'
@@ -49,14 +69,116 @@ export default function AnimalDetailScreen() {
     }
   }
 
-  const handleCall = () => {
-    // TODO: Implement phone call
-    Linking.openURL('tel:+905551234567')
+  const handleToggleFavorite = async () => {
+    if (!user) {
+      Alert.alert('Giriş Gerekli', 'Favorilere eklemek için giriş yapmalısınız')
+      return
+    }
+
+    setLoadingFavorite(true)
+    try {
+      const token = await user.getIdToken()
+      await favoritesAPI.toggleFavorite(animal!.id, token, !isFavorite)
+      setIsFavorite(!isFavorite)
+    } catch (error: any) {
+      Alert.alert('Hata', error.message || 'Bir hata oluştu')
+    } finally {
+      setLoadingFavorite(false)
+    }
   }
 
-  const handleMessage = () => {
-    // TODO: Implement message
-    Linking.openURL('sms:+905551234567')
+  const handleCall = async () => {
+    if (!user) {
+      Alert.alert('Giriş Gerekli', 'Telefon numarasını görmek için giriş yapmalısınız')
+      return
+    }
+
+    if (!backendUser?.verify) {
+      Alert.alert(
+        'Hesap Doğrulanmamış',
+        'Telefon numarasını görmek için hesabınızı doğrulamanız gerekmektedir.'
+      )
+      return
+    }
+
+    if (!backendUser.phone) {
+      Alert.alert(
+        'Telefon Numarası Yok',
+        'Telefon numaranızı profil sayfanızdan eklemeniz gerekmektedir.'
+      )
+      return
+    }
+
+    setLoadingPhone(true)
+    try {
+      const token = await user.getIdToken()
+      const result = await animalsAPIExtended.getOwnerPhone(animal!.id, token)
+      
+      if (result.error) {
+        Alert.alert('Hata', result.message || 'Telefon numarası alınamadı')
+        return
+      }
+
+      if (result.phone) {
+        Alert.alert(
+          'Telefon Numarası',
+          `${result.ownerName || 'İlan Sahibi'}: ${result.phone}`,
+          [
+            { text: 'İptal', style: 'cancel' },
+            {
+              text: 'Ara',
+              onPress: () => Linking.openURL(`tel:${result.phone}`),
+            },
+          ]
+        )
+      }
+    } catch (error: any) {
+      Alert.alert('Hata', error.message || 'Telefon numarası alınırken bir hata oluştu')
+    } finally {
+      setLoadingPhone(false)
+    }
+  }
+
+  const handleMessage = async () => {
+    if (!user) {
+      Alert.alert('Giriş Gerekli', 'Mesaj göndermek için giriş yapmalısınız')
+      return
+    }
+
+    if (!backendUser?.verify) {
+      Alert.alert(
+        'Hesap Doğrulanmamış',
+        'Mesaj göndermek için hesabınızı doğrulamanız gerekmektedir.'
+      )
+      return
+    }
+
+    if (!backendUser.phone) {
+      Alert.alert(
+        'Telefon Numarası Yok',
+        'Telefon numaranızı profil sayfanızdan eklemeniz gerekmektedir.'
+      )
+      return
+    }
+
+    setLoadingPhone(true)
+    try {
+      const token = await user.getIdToken()
+      const result = await animalsAPIExtended.getOwnerPhone(animal!.id, token)
+      
+      if (result.error) {
+        Alert.alert('Hata', result.message || 'Telefon numarası alınamadı')
+        return
+      }
+
+      if (result.phone) {
+        Linking.openURL(`sms:${result.phone}`)
+      }
+    } catch (error: any) {
+      Alert.alert('Hata', error.message || 'Telefon numarası alınırken bir hata oluştu')
+    } finally {
+      setLoadingPhone(false)
+    }
   }
 
   if (loading) {
@@ -129,13 +251,18 @@ export default function AnimalDetailScreen() {
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.actionButton}
-              onPress={() => setIsFavorite(!isFavorite)}
+              onPress={handleToggleFavorite}
+              disabled={loadingFavorite}
             >
-              <Ionicons
-                name={isFavorite ? 'heart' : 'heart-outline'}
-                size={20}
-                color={isFavorite ? '#FF7A00' : '#666'}
-              />
+              {loadingFavorite ? (
+                <ActivityIndicator size="small" color="#FF7A00" />
+              ) : (
+                <Ionicons
+                  name={isFavorite ? 'heart' : 'heart-outline'}
+                  size={20}
+                  color={isFavorite ? '#FF7A00' : '#666'}
+                />
+              )}
             </TouchableOpacity>
           </View>
         </View>
@@ -235,18 +362,35 @@ export default function AnimalDetailScreen() {
             </View>
           </View>
           <View style={styles.contactButtons}>
-            <TouchableOpacity style={styles.contactButton} onPress={handleCall}>
-              <Ionicons name="call-outline" size={20} color="#fff" />
-              <Text style={styles.contactButtonText}>Telefonu Göster</Text>
+            <TouchableOpacity 
+              style={[styles.contactButton, loadingPhone && styles.contactButtonDisabled]} 
+              onPress={handleCall}
+              disabled={loadingPhone}
+            >
+              {loadingPhone ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <>
+                  <Ionicons name="call-outline" size={20} color="#fff" />
+                  <Text style={styles.contactButtonText}>Telefonu Göster</Text>
+                </>
+              )}
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.contactButton, styles.contactButtonOutline]}
+              style={[styles.contactButton, styles.contactButtonOutline, loadingPhone && styles.contactButtonDisabled]}
               onPress={handleMessage}
+              disabled={loadingPhone}
             >
-              <Ionicons name="mail-outline" size={20} color="#FF7A00" />
-              <Text style={[styles.contactButtonText, styles.contactButtonTextOutline]}>
-                Mesaj Gönder
-              </Text>
+              {loadingPhone ? (
+                <ActivityIndicator color="#FF7A00" />
+              ) : (
+                <>
+                  <Ionicons name="mail-outline" size={20} color="#FF7A00" />
+                  <Text style={[styles.contactButtonText, styles.contactButtonTextOutline]}>
+                    Mesaj Gönder
+                  </Text>
+                </>
+              )}
             </TouchableOpacity>
           </View>
           <View style={styles.note}>
@@ -481,6 +625,9 @@ const styles = StyleSheet.create({
   },
   contactButtonTextOutline: {
     color: '#FF7A00',
+  },
+  contactButtonDisabled: {
+    opacity: 0.6,
   },
   note: {
     backgroundColor: '#FFF7F0',

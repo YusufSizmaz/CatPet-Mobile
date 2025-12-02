@@ -38,8 +38,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const userData = await authAPI.verifyToken(idToken)
       setBackendUser(userData)
       await AsyncStorage.setItem('authToken', idToken)
-    } catch (error) {
-      console.error('Backend sync error:', error)
+    } catch (error: any) {
+      // Backend'e bağlanamazsa sadece log'la, uygulama çalışmaya devam etsin
+      console.warn('Backend sync error (non-critical):', error?.message || error)
+      // Token'ı yine de kaydet, offline çalışma için
+      try {
+        const idToken = await firebaseUser.getIdToken()
+        await AsyncStorage.setItem('authToken', idToken)
+      } catch (tokenError) {
+        console.error('Failed to save token:', tokenError)
+      }
     }
   }
 

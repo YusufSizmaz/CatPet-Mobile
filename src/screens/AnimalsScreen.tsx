@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Modal } from 'react-native'
 import { useAnimals } from '../hooks/useAnimals'
 import AnimalCard from '../components/AnimalCard'
@@ -6,6 +6,8 @@ import AnimalFilters from '../components/AnimalFilters'
 import Pagination from '../components/Pagination'
 import { ANIMAL_TYPE_LABELS } from '../utils/constants'
 import { AnimalFilters as AnimalFiltersType } from '../types/animal.types'
+import { useAuth } from '../contexts/AuthContext'
+import { favoritesAPI } from '../services/api'
 
 const ITEMS_PER_PAGE = 6
 
@@ -14,8 +16,31 @@ export default function AnimalsScreen() {
   const [filters, setFilters] = useState<AnimalFiltersType>({})
   const [sortBy, setSortBy] = useState<string>('newest')
   const [showFilters, setShowFilters] = useState(false)
+  const { user } = useAuth()
+  const [favoriteIds, setFavoriteIds] = useState<number[]>([])
 
   const { animals, loading, error, refetch } = useAnimals(filters)
+
+  // Load favorite IDs when user is logged in
+  useEffect(() => {
+    const loadFavoriteIds = async () => {
+      if (!user) {
+        setFavoriteIds([])
+        return
+      }
+
+      try {
+        const token = await user.getIdToken()
+        const result = await favoritesAPI.getMyFavoriteIds(token)
+        setFavoriteIds(result.favoriteIds || [])
+      } catch (error) {
+        console.error('Error loading favorite IDs:', error)
+        setFavoriteIds([])
+      }
+    }
+
+    loadFavoriteIds()
+  }, [user])
 
   const filteredAndSortedAnimals = useMemo(() => {
     let result = [...animals]
@@ -36,32 +61,36 @@ export default function AnimalsScreen() {
       result = result.filter((animal) => (filters.gender as string[]).includes(animal.gender))
     }
 
-    // Apply sorting
-    switch (sortBy) {
-      case 'newest':
-        result.sort((a, b) => {
+    // Sort favorites first, then apply other sorting
+    result.sort((a, b) => {
+      const aIsFavorite = favoriteIds.includes(a.id)
+      const bIsFavorite = favoriteIds.includes(b.id)
+      
+      // Favorites first
+      if (aIsFavorite && !bIsFavorite) return -1
+      if (!aIsFavorite && bIsFavorite) return 1
+      
+      // Then apply other sorting
+      switch (sortBy) {
+        case 'newest':
           const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0
           const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0
           return dateB - dateA
-        })
-        break
-      case 'oldest':
-        result.sort((a, b) => {
-          const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0
-          const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0
-          return dateA - dateB
-        })
-        break
-      case 'age-asc':
-        result.sort((a, b) => a.age - b.age)
-        break
-      case 'age-desc':
-        result.sort((a, b) => b.age - a.age)
-        break
-    }
+        case 'oldest':
+          const dateAOld = a.createdAt ? new Date(a.createdAt).getTime() : 0
+          const dateBOld = b.createdAt ? new Date(b.createdAt).getTime() : 0
+          return dateAOld - dateBOld
+        case 'age-asc':
+          return a.age - b.age
+        case 'age-desc':
+          return b.age - a.age
+        default:
+          return 0
+      }
+    })
 
     return result
-  }, [animals, filters, sortBy])
+  }, [animals, filters, sortBy, favoriteIds])
 
   const paginatedAnimals = useMemo(() => {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
@@ -148,7 +177,22 @@ export default function AnimalsScreen() {
         ) : (
           <View style={styles.cardsContainer}>
             {paginatedAnimals.map((animal) => (
-              <AnimalCard key={animal.id} animal={animal} />
+              <AnimalCard 
+                key={animal.id} 
+                animal={animal} 
+                favoriteIds={favoriteIds}
+                onFavoriteToggle={async () => {
+                  if (user) {
+                    try {
+                      const token = await user.getIdToken()
+                      const result = await favoritesAPI.getMyFavoriteIds(token)
+                      setFavoriteIds(result.favoriteIds || [])
+                    } catch (error) {
+                      console.error('Error refreshing favorite IDs:', error)
+                    }
+                  }
+                }}
+              />
             ))}
           </View>
         )}

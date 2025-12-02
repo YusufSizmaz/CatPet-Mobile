@@ -13,7 +13,6 @@ import {
 } from 'react-native'
 import { useAuth } from '../contexts/AuthContext'
 import { useNavigation } from '@react-navigation/native'
-import { Ionicons } from '@expo/vector-icons'
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('')
@@ -79,7 +78,7 @@ export default function LoginScreen() {
             value={password}
             onChangeText={setPassword}
             secureTextEntry
-            autoComplete={isRegister ? 'password-new' : 'password'}
+            autoComplete="password"
             editable={!isLoading}
           />
 
@@ -106,18 +105,14 @@ export default function LoginScreen() {
             onPress={handleGoogleLogin}
             disabled={isLoading}
           >
-            <Ionicons name="logo-google" size={20} color="#fff" style={styles.googleIcon} />
+            <Text style={styles.googleIcon}>G</Text>
             <Text style={styles.googleButtonText}>Google ile Giriş Yap</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.switchButton}
             onPress={() => {
-              if (isRegister) {
-                setIsRegister(false)
-              } else {
-                navigation.navigate('Register' as never)
-              }
+              navigation.navigate('Register' as never)
             }}
             disabled={isLoading}
           >
@@ -204,6 +199,9 @@ const styles = StyleSheet.create({
   },
   googleIcon: {
     marginRight: 8,
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#fff',
   },
   googleButtonText: {
     color: '#fff',

@@ -194,3 +194,148 @@ export const userSettingsAPI = {
     }),
 }
 
+// Favorites API
+export const favoritesAPI = {
+  toggleFavorite: async (animalId: number, token: string, isFavorite?: boolean) => {
+    return fetchAPI<any>('/favorites/toggle', {
+      method: 'POST',
+      data: { animalId, isFavorite },
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    })
+  },
+  
+  getMyFavorites: async (token: string) => {
+    return fetchAPI<any[]>('/favorites/my-favorites', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    })
+  },
+  
+  checkFavorite: async (animalId: number, token: string) => {
+    return fetchAPI<{ isFavorite: boolean }>(`/favorites/check/${animalId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    })
+  },
+  
+  getMyFavoriteIds: async (token: string) => {
+    return fetchAPI<{ favoriteIds: number[] }>('/favorites/my-favorite-ids', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    })
+  },
+}
+
+// Forum API
+export const forumAPI = {
+  getAllTopics: (blogId?: number, page?: number, limit?: number) => {
+    const params: any = {}
+    if (blogId) params.blogId = blogId
+    if (page) params.page = page
+    if (limit) params.limit = limit
+    return fetchAPI<any[]>('/forum/topics', {
+      method: 'GET',
+      params,
+    })
+  },
+  
+  getTopicById: (id: number) => fetchAPI<any>(`/forum/topics/${id}`, { method: 'GET' }),
+  
+  createTopic: async (data: { title: string; content: string; blogId?: number }, token: string) => {
+    return fetchAPI<any>('/forum/topics', {
+      method: 'POST',
+      data,
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    })
+  },
+  
+  getComments: (topicId: number) => fetchAPI<any[]>(`/forum/topics/${topicId}/comments`, { method: 'GET' }),
+  
+  createComment: async (data: { forumId: number; content: string }, token: string) => {
+    return fetchAPI<any>('/forum/comments', {
+      method: 'POST',
+      data,
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    })
+  },
+  
+  updateComment: async (id: number, data: { content: string }, token: string) => {
+    return fetchAPI<any>(`/forum/comments/${id}`, {
+      method: 'PUT',
+      data,
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    })
+  },
+  
+  deleteComment: async (id: number, token: string) => {
+    return fetchAPI<void>(`/forum/comments/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    })
+  },
+  
+  getPopularTopics: (limit?: number) => {
+    const params: any = {}
+    if (limit) params.limit = limit
+    return fetchAPI<any[]>('/forum/topics/popular', {
+      method: 'GET',
+      params,
+    })
+  },
+  
+  getActiveUsers: (limit?: number) => {
+    const params: any = {}
+    if (limit) params.limit = limit
+    return fetchAPI<any[]>('/forum/users/active', {
+      method: 'GET',
+      params,
+    })
+  },
+}
+
+// Animals API - Additional endpoints
+export const animalsAPIExtended = {
+  ...animalsAPI,
+  getOwnerPhone: async (id: number, token: string) => {
+    return fetchAPI<any>(`/animals/${id}/owner-phone`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    })
+  },
+  findByOwnerId: async (ownerId: number, token: string) => {
+    return fetchAPI<any[]>(`/animals/owner/${ownerId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    })
+  },
+  updateStatus: async (id: number, isActive: boolean, token: string) => {
+    return fetchAPI<any>(`/animals/${id}/status`, {
+      method: 'PUT',
+      data: { isActive },
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    })
+  },
+}
+

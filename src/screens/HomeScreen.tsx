@@ -7,92 +7,174 @@ import { Ionicons } from '@expo/vector-icons'
 export default function HomeScreen() {
   const { user } = useAuth()
   const navigation = useNavigation()
+  const isLoggedIn = !!user
+
+  const actions = [
+    {
+      title: 'Sahiplen',
+      description: 'Yeni bir dost arıyorsanız',
+      icon: 'paw',
+      link: 'Animals',
+    },
+    {
+      title: 'Mama Bırak',
+      description: 'Sokak hayvanlarına yardım edin',
+      icon: 'location',
+      link: 'FoodPoints',
+    },
+    {
+      title: 'Kayıp İlanı',
+      description: 'Kayıp hayvanınızı bulun',
+      icon: 'search',
+      link: 'LostAnimal',
+    },
+    {
+      title: 'Bilgi Bankası',
+      description: 'Uzman bilgilerine ulaşın',
+      icon: 'book',
+      link: 'Blog',
+    },
+  ]
+
+  const features = [
+    {
+      icon: 'paw',
+      title: 'Sahiplenme İlanları',
+      description: 'Farklı cins ve yaşlardan yüzlerce dostumuz yeni yuvasını arıyor. Profilinizi oluşturun, hayatınızın dostuyla tanışın.',
+      link: 'Animals',
+      linkText: 'İlanları Görüntüle',
+    },
+    {
+      icon: 'location',
+      title: 'Mama Bırakma Noktaları',
+      description: 'Harita üzerinden mama ve su kaplarının konumlarını görün, yeni noktalar ekleyerek sokaktaki canları doyurun.',
+      link: 'FoodPoints',
+      linkText: 'Haritayı Aç',
+    },
+    {
+      icon: 'book',
+      title: 'Bilgilendirme Merkezi',
+      description: 'Hayvan bakımı, sağlığı, eğitimi ve acil durum müdahaleleri hakkında uzmanlar tarafından hazırlanmış makalelere ulaşın.',
+      link: 'Blog',
+      linkText: 'Makaleleri Oku',
+    },
+  ]
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.content}>
         {/* Hero Section */}
         <View style={styles.heroSection}>
-          <Text style={styles.title}>CatPet'e Hoş Geldiniz!</Text>
-          {user && (
-            <Text style={styles.subtitle}>
-              Merhaba, {user.displayName || user.email}
-            </Text>
-          )}
+          <View style={styles.heroBadge}>
+            <Ionicons name="paw" size={16} color="#FF7A00" />
+            <Text style={styles.heroBadgeText}>Tüm Hayvan Dostlarımız İçin</Text>
+          </View>
+          <Text style={styles.title}>Sevgi Dolu Bir Yuvaya Kavuşmaları İçin El Ele</Text>
           <Text style={styles.description}>
-            Hayvanlar için ücretsiz sahiplendirme ve mama noktaları platformu
+            CatPet, Türkiye genelindeki tüm hayvan dostlarımızı sahiplendirme, besleme ve bilgilendirme misyonuyla bir araya getiren bir topluluk platformudur.
           </Text>
+          <View style={styles.heroActions}>
+            <TouchableOpacity
+              style={styles.heroButton}
+              onPress={() => navigation.navigate('Animals' as never)}
+            >
+              <Ionicons name="compass-outline" size={20} color="#fff" />
+              <Text style={styles.heroButtonText}>Keşfetmeye Başla</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.heroButton, styles.heroButtonOutline]}
+              onPress={() => navigation.navigate('About' as never)}
+            >
+              <Ionicons name="information-circle-outline" size={20} color="#FF7A00" />
+              <Text style={[styles.heroButtonText, styles.heroButtonTextOutline]}>Hakkımızda</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.heroFeatures}>
+            <View style={styles.heroFeature}>
+              <Ionicons name="checkmark-circle" size={16} color="#10b981" />
+              <Text style={styles.heroFeatureText}>Tamamen Ücretsiz</Text>
+            </View>
+            <View style={styles.heroFeature}>
+              <Ionicons name="checkmark-circle" size={16} color="#10b981" />
+              <Text style={styles.heroFeatureText}>Kolay Kullanım</Text>
+            </View>
+            <View style={styles.heroFeature}>
+              <Ionicons name="checkmark-circle" size={16} color="#10b981" />
+              <Text style={styles.heroFeatureText}>Güvenli Platform</Text>
+            </View>
+          </View>
         </View>
 
         {/* Quick Actions */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Hızlı Erişim</Text>
-          <View style={styles.quickActions}>
-            <TouchableOpacity
-              style={styles.quickActionCard}
-              onPress={() => navigation.navigate('Animals' as never)}
-            >
-              <Ionicons name="paw" size={32} color="#FF7A00" />
-              <Text style={styles.quickActionText}>Sahiplen</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.quickActionCard}
-              onPress={() => navigation.navigate('FoodPoints' as never)}
-            >
-              <Ionicons name="location" size={32} color="#FF7A00" />
-              <Text style={styles.quickActionText}>Mama Bırak</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.quickActionCard}
-              onPress={() => navigation.navigate('Blog' as never)}
-            >
-              <Ionicons name="book" size={32} color="#FF7A00" />
-              <Text style={styles.quickActionText}>Bilgi Bankası</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.quickActionCard}
-              onPress={() => navigation.navigate('About' as never)}
-            >
-              <Ionicons name="information-circle" size={32} color="#FF7A00" />
-              <Text style={styles.quickActionText}>Hakkımızda</Text>
-            </TouchableOpacity>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Hızlı Erişim</Text>
+            <Text style={styles.sectionSubtitle}>
+              Ne yapmak istiyorsunuz? Size en uygun seçeneği seçin.
+            </Text>
           </View>
+          <View style={styles.quickActions}>
+            {actions.map((action) => (
+              <TouchableOpacity
+                key={action.title}
+                style={styles.quickActionCard}
+                onPress={() => navigation.navigate(action.link as never)}
+              >
+                <View style={styles.quickActionIconContainer}>
+                  <Ionicons name={action.icon as any} size={28} color="#FF7A00" />
+                </View>
+                <View style={styles.quickActionContent}>
+                  <Text style={styles.quickActionTitle}>{action.title}</Text>
+                  <Text style={styles.quickActionDescription}>{action.description}</Text>
+                </View>
+                <Ionicons name="arrow-forward-outline" size={20} color="#999" />
+              </TouchableOpacity>
+            ))}
+          </View>
+          {!isLoggedIn && (
+            <View style={styles.registerPrompt}>
+              <Text style={styles.registerPromptText}>
+                <Text style={styles.registerPromptBold}>Daha fazla özellik için:</Text>{' '}
+                Ücretsiz hesap oluşturun
+              </Text>
+            </View>
+          )}
         </View>
 
         {/* Features */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Özellikler</Text>
-          <View style={styles.featureCard}>
-            <Ionicons name="checkmark-circle" size={24} color="#10b981" />
-            <View style={styles.featureText}>
-              <Text style={styles.featureTitle}>Tamamen Ücretsiz</Text>
-              <Text style={styles.featureDescription}>
-                Tüm özellikler ücretsizdir. Hayvan sahiplendirme, mama noktası ekleme ve daha fazlası.
-              </Text>
+          <View style={styles.sectionHeader}>
+            <View style={styles.featuresBadge}>
+              <Ionicons name="star" size={16} color="#FF7A00" />
+              <Text style={styles.featuresBadgeText}>Özelliklerimiz</Text>
             </View>
+            <Text style={styles.sectionTitle}>Platformumuzun Sundukları</Text>
+            <Text style={styles.sectionSubtitle}>
+              Hayvanseverler için tasarlanmış modüler özelliklerimizle, dostlarımıza yardım etmek artık daha kolay ve etkili.
+            </Text>
           </View>
-          <View style={styles.featureCard}>
-            <Ionicons name="checkmark-circle" size={24} color="#10b981" />
-            <View style={styles.featureText}>
-              <Text style={styles.featureTitle}>Kolay Kullanım</Text>
-              <Text style={styles.featureDescription}>
-                Basit ve kullanıcı dostu arayüz ile kolayca hayvan sahiplenebilir veya ilan verebilirsiniz.
-              </Text>
-            </View>
-          </View>
-          <View style={styles.featureCard}>
-            <Ionicons name="checkmark-circle" size={24} color="#10b981" />
-            <View style={styles.featureText}>
-              <Text style={styles.featureTitle}>Güvenli Platform</Text>
-              <Text style={styles.featureDescription}>
-                Firebase Authentication ile güvenli giriş ve veri koruması.
-              </Text>
-            </View>
+          <View style={styles.featuresGrid}>
+            {features.map((feature) => (
+              <View key={feature.title} style={styles.featureCard}>
+                <View style={styles.featureIconContainer}>
+                  <Ionicons name={feature.icon as any} size={32} color="#FF7A00" />
+                </View>
+                <Text style={styles.featureTitle}>{feature.title}</Text>
+                <Text style={styles.featureDescription}>{feature.description}</Text>
+                <TouchableOpacity
+                  style={styles.featureLink}
+                  onPress={() => navigation.navigate(feature.link as never)}
+                >
+                  <Text style={styles.featureLinkText}>{feature.linkText}</Text>
+                  <Ionicons name="arrow-forward" size={16} color="#FF7A00" />
+                </TouchableOpacity>
+              </View>
+            ))}
           </View>
         </View>
 
         {/* CTA */}
-        {!user && (
+        {!isLoggedIn && (
           <View style={styles.ctaSection}>
             <Text style={styles.ctaTitle}>Hemen Başlayın</Text>
             <Text style={styles.ctaText}>
@@ -120,76 +202,201 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   heroSection: {
-    marginBottom: 32,
+    marginBottom: 40,
+    alignItems: 'center',
+  },
+  heroBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF7F0',
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 20,
+    marginBottom: 16,
+    gap: 6,
+  },
+  heroBadgeText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#FF7A00',
   },
   title: {
-    fontSize: 32,
+    fontSize: 28,
+    fontWeight: '600',
+    marginBottom: 16,
+    color: '#1a1a1a',
+    textAlign: 'center',
+    lineHeight: 36,
+  },
+  description: {
+    fontSize: 16,
+    color: '#666',
+    lineHeight: 24,
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  heroActions: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 20,
+    width: '100%',
+  },
+  heroButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FF7A00',
+    padding: 14,
+    borderRadius: 24,
+    gap: 8,
+  },
+  heroButtonOutline: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#FF7A00',
+  },
+  heroButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  heroButtonTextOutline: {
+    color: '#FF7A00',
+  },
+  heroFeatures: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 16,
+  },
+  heroFeature: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  heroFeatureText: {
+    fontSize: 12,
+    color: '#666',
+  },
+  section: {
+    marginBottom: 40,
+  },
+  sectionHeader: {
+    marginBottom: 20,
+  },
+  sectionTitle: {
+    fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 8,
     color: '#1a1a1a',
   },
-  subtitle: {
-    fontSize: 20,
-    marginBottom: 12,
+  sectionSubtitle: {
+    fontSize: 14,
     color: '#666',
-    fontWeight: '500',
+    lineHeight: 20,
   },
-  description: {
-    fontSize: 16,
-    color: '#888',
-    lineHeight: 24,
+  featuresBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    backgroundColor: '#FFF7F0',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    marginBottom: 12,
+    gap: 6,
   },
-  section: {
-    marginBottom: 32,
-  },
-  sectionTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginBottom: 16,
-    color: '#1a1a1a',
+  featuresBadgeText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#FF7A00',
   },
   quickActions: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
     gap: 12,
   },
   quickActionCard: {
-    flex: 1,
-    minWidth: '45%',
-    backgroundColor: '#f9f9f9',
-    borderRadius: 12,
-    padding: 20,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#e5e5e5',
-  },
-  quickActionText: {
-    marginTop: 8,
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1a1a1a',
-  },
-  featureCard: {
     flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#f9f9f9',
     borderRadius: 12,
     padding: 16,
-    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#e5e5e5',
     gap: 12,
   },
-  featureText: {
+  quickActionIconContainer: {
+    backgroundColor: '#FFF7F0',
+    padding: 12,
+    borderRadius: 12,
+  },
+  quickActionContent: {
     flex: 1,
   },
-  featureTitle: {
+  quickActionTitle: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: 'bold',
     marginBottom: 4,
+    color: '#1a1a1a',
+  },
+  quickActionDescription: {
+    fontSize: 12,
+    color: '#666',
+  },
+  registerPrompt: {
+    marginTop: 16,
+    padding: 16,
+    backgroundColor: '#FFF7F0',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#FFE5CC',
+  },
+  registerPromptText: {
+    fontSize: 12,
+    color: '#1a1a1a',
+    textAlign: 'center',
+  },
+  registerPromptBold: {
+    fontWeight: '600',
+  },
+  featuresGrid: {
+    gap: 16,
+  },
+  featureCard: {
+    backgroundColor: '#f9f9f9',
+    borderRadius: 12,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#e5e5e5',
+  },
+  featureIconContainer: {
+    backgroundColor: '#FFF7F0',
+    padding: 12,
+    borderRadius: 12,
+    alignSelf: 'flex-start',
+    marginBottom: 16,
+  },
+  featureTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 8,
     color: '#1a1a1a',
   },
   featureDescription: {
     fontSize: 14,
     color: '#666',
     lineHeight: 20,
+    marginBottom: 16,
+  },
+  featureLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  featureLinkText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#FF7A00',
   },
   ctaSection: {
     backgroundColor: '#FFF7F0',
@@ -215,7 +422,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FF7A00',
     paddingHorizontal: 32,
     paddingVertical: 12,
-    borderRadius: 8,
+    borderRadius: 24,
   },
   ctaButtonText: {
     color: '#fff',

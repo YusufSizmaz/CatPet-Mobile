@@ -465,6 +465,7 @@ const styles = StyleSheet.create({
   },
   tabContent: {
     padding: 20,
+    maxWidth: '100%',
   },
   sectionTitle: {
     fontSize: 20,
@@ -478,12 +479,16 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     gap: 12,
+    flexWrap: 'wrap',
   },
   halfWidth: {
     flex: 1,
+    minWidth: '45%',
+    maxWidth: '48%',
   },
   fullWidth: {
     width: '100%',
+    maxWidth: '100%',
   },
   label: {
     fontSize: 12,

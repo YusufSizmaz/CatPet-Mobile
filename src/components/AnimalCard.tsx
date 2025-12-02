@@ -1,17 +1,48 @@
-import React, { useState } from 'react'
-import { View, Text, StyleSheet, Image, TouchableOpacity, Pressable } from 'react-native'
+import React, { useState, useEffect } from 'react'
+import { View, Text, StyleSheet, Image, TouchableOpacity, Pressable, ActivityIndicator, Alert } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
 import { Animal } from '../types/animal.types'
 import { ANIMAL_TYPE_LABELS, GENDER_LABELS } from '../utils/constants'
 import { Ionicons } from '@expo/vector-icons'
+import { useAuth } from '../contexts/AuthContext'
+import { favoritesAPI } from '../services/api'
 
 interface AnimalCardProps {
   animal: Animal
+  favoriteIds?: number[]
+  onFavoriteToggle?: () => void
 }
 
-export default function AnimalCard({ animal }: AnimalCardProps) {
-  const [isFavorite, setIsFavorite] = useState(false)
+export default function AnimalCard({ animal, favoriteIds = [], onFavoriteToggle }: AnimalCardProps) {
+  const { user } = useAuth()
   const navigation = useNavigation()
+  const [isFavorite, setIsFavorite] = useState(false)
+  const [loadingFavorite, setLoadingFavorite] = useState(false)
+
+  useEffect(() => {
+    setIsFavorite(favoriteIds.includes(animal.id))
+  }, [favoriteIds, animal.id])
+
+  const handleToggleFavorite = async (e: any) => {
+    e.stopPropagation()
+    
+    if (!user) {
+      Alert.alert('Giriş Gerekli', 'Favorilere eklemek için giriş yapmalısınız')
+      return
+    }
+
+    setLoadingFavorite(true)
+    try {
+      const token = await user.getIdToken()
+      await favoritesAPI.toggleFavorite(animal.id, token, !isFavorite)
+      setIsFavorite(!isFavorite)
+      onFavoriteToggle?.()
+    } catch (error: any) {
+      Alert.alert('Hata', error.message || 'Bir hata oluştu')
+    } finally {
+      setLoadingFavorite(false)
+    }
+  }
 
   return (
     <Pressable
@@ -30,16 +61,18 @@ export default function AnimalCard({ animal }: AnimalCardProps) {
         />
         <TouchableOpacity
           style={styles.favoriteButton}
-          onPress={(e) => {
-            e.stopPropagation()
-            setIsFavorite(!isFavorite)
-          }}
+          onPress={handleToggleFavorite}
+          disabled={loadingFavorite}
         >
-          <Ionicons
-            name={isFavorite ? 'heart' : 'heart-outline'}
-            size={20}
-            color={isFavorite ? '#FF7A00' : '#666'}
-          />
+          {loadingFavorite ? (
+            <ActivityIndicator size="small" color="#FF7A00" />
+          ) : (
+            <Ionicons
+              name={isFavorite ? 'heart' : 'heart-outline'}
+              size={20}
+              color={isFavorite ? '#FF7A00' : '#666'}
+            />
+          )}
         </TouchableOpacity>
       </View>
       
