@@ -27,8 +27,15 @@ export default function AnimalDetailScreen() {
         const token = await user.getIdToken()
         const result = await favoritesAPI.checkFavorite(animal.id, token)
         setIsFavorite(result.isFavorite)
-      } catch (error) {
-        console.error('Error loading favorite status:', error)
+      } catch (error: any) {
+        // 401 hatası kullanıcı henüz backend'de kayıtlı olmayabilir veya token geçersiz
+        // Bu durumda sessizce false set ediyoruz
+        if (error?.message?.includes('401')) {
+          console.debug('Favorite status: User not authenticated in backend yet')
+        } else {
+          console.error('Error loading favorite status:', error)
+        }
+        setIsFavorite(false)
       }
     }
 

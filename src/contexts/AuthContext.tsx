@@ -39,14 +39,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setBackendUser(userData)
       await AsyncStorage.setItem('authToken', idToken)
     } catch (error: any) {
-      // Backend'e bağlanamazsa sadece log'la, uygulama çalışmaya devam etsin
-      console.warn('Backend sync error (non-critical):', error?.message || error)
+      // Backend'e bağlanamazsa sadece debug modda log'la, uygulama çalışmaya devam etsin
+      // Production'da bu hata sessizce handle edilir
+      // console.debug kullanarak daha az görünür hale getiriyoruz
+      console.debug('Backend sync error (non-critical, offline mode):', error?.message || error)
       // Token'ı yine de kaydet, offline çalışma için
       try {
         const idToken = await firebaseUser.getIdToken()
         await AsyncStorage.setItem('authToken', idToken)
       } catch (tokenError) {
-        console.error('Failed to save token:', tokenError)
+        console.debug('Failed to save token:', tokenError)
       }
     }
   }
@@ -87,6 +89,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loginWithGoogle = async () => {
     const userCredential = await signInWithGoogle()
+    if (!userCredential) {
+      // User cancelled - silently return
+      return
+    }
     await syncUserWithBackend(userCredential.user)
   }
 

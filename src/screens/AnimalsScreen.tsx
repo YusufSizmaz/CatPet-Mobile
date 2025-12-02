@@ -33,8 +33,14 @@ export default function AnimalsScreen() {
         const token = await user.getIdToken()
         const result = await favoritesAPI.getMyFavoriteIds(token)
         setFavoriteIds(result.favoriteIds || [])
-      } catch (error) {
-        console.error('Error loading favorite IDs:', error)
+      } catch (error: any) {
+        // 401 hatası kullanıcı henüz backend'de kayıtlı olmayabilir veya token geçersiz
+        // Bu durumda sessizce boş array set ediyoruz
+        if (error?.message?.includes('401')) {
+          console.debug('Favorite IDs: User not authenticated in backend yet')
+        } else {
+          console.error('Error loading favorite IDs:', error)
+        }
         setFavoriteIds([])
       }
     }
@@ -187,8 +193,11 @@ export default function AnimalsScreen() {
                       const token = await user.getIdToken()
                       const result = await favoritesAPI.getMyFavoriteIds(token)
                       setFavoriteIds(result.favoriteIds || [])
-                    } catch (error) {
-                      console.error('Error refreshing favorite IDs:', error)
+                    } catch (error: any) {
+                      // 401 hatası sessizce handle edilir
+                      if (!error?.message?.includes('401')) {
+                        console.error('Error refreshing favorite IDs:', error)
+                      }
                     }
                   }
                 }}

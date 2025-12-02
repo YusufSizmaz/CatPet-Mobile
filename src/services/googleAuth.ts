@@ -1,6 +1,6 @@
 import * as AuthSession from 'expo-auth-session'
 import * as WebBrowser from 'expo-web-browser'
-import { GoogleAuthProvider, signInWithCredential } from 'firebase/auth'
+import { GoogleAuthProvider, signInWithCredential, UserCredential } from 'firebase/auth'
 import Constants from 'expo-constants'
 import { auth } from './firebase'
 
@@ -31,7 +31,7 @@ const getGoogleClientId = () => {
   return clientId
 }
 
-export async function signInWithGoogle() {
+export async function signInWithGoogle(): Promise<UserCredential | null> {
   try {
     const clientId = getGoogleClientId()
     
@@ -65,7 +65,8 @@ export async function signInWithGoogle() {
 
       return userCredential
     } else if (result.type === 'cancel') {
-      throw new Error('Google girişi iptal edildi')
+      // User cancelled - return null instead of throwing error
+      return null
     } else {
       throw new Error('Google Sign-In başarısız oldu')
     }

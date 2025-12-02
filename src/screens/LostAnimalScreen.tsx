@@ -8,7 +8,7 @@ import { ANIMAL_TYPE_LABELS } from '../utils/constants'
 import { Ionicons } from '@expo/vector-icons'
 
 export default function LostAnimalScreen() {
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const navigation = useNavigation()
   const [selectedType, setSelectedType] = useState<string>('')
   const [selectedCity, setSelectedCity] = useState<string>('')
@@ -34,8 +34,19 @@ export default function LostAnimalScreen() {
   // Filter lost animals (in a real app, this would come from backend with a flag)
   const lostAnimals = useMemo(() => {
     // For now, we'll show all animals. In production, filter by a 'isLost' flag
-    return animals
+    return animals || []
   }, [animals])
+
+  if (authLoading) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.centerContainer}>
+          <ActivityIndicator size="large" color="#FF7A00" />
+          <Text style={styles.loadingText}>Yükleniyor...</Text>
+        </View>
+      </View>
+    )
+  }
 
   const handleSubmit = () => {
     if (!formData.name || !formData.type || !formData.city) {
@@ -298,8 +309,10 @@ export default function LostAnimalScreen() {
         <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
           <Text style={styles.submitButtonText}>İlanı Yayınla</Text>
         </TouchableOpacity>
-      </View>
-    </ScrollView>
+          </ScrollView>
+        </View>
+      </Modal>
+    </View>
   )
 }
 

@@ -41,8 +41,14 @@ export default function LoginScreen() {
     setIsLoading(true)
     try {
       await loginWithGoogle()
+      // If loginWithGoogle returns without error, it means either:
+      // 1. Success (handled by AuthContext)
+      // 2. User cancelled (silently handled)
     } catch (error: any) {
-      Alert.alert('Hata', error.message || 'Google ile giriş başarısız oldu')
+      // Only show error if it's not a cancellation
+      if (!error.message?.includes('iptal')) {
+        Alert.alert('Hata', error.message || 'Google ile giriş başarısız oldu')
+      }
     } finally {
       setIsLoading(false)
     }

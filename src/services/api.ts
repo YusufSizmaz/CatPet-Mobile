@@ -3,12 +3,16 @@ import Constants from 'expo-constants'
 
 const API_URL = Constants.expoConfig?.extra?.apiUrl || process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3002'
 
+// Log API URL for debugging
+console.log('🔗 API URL:', API_URL)
+
 // Create axios instance
 const axiosInstance: AxiosInstance = axios.create({
   baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 5000, // 5 second timeout
 })
 
 // Add token interceptor
@@ -37,9 +41,20 @@ async function fetchAPI<T>(endpoint: string, options?: AxiosRequestConfig): Prom
   } catch (error: any) {
     if (error.response) {
       // Server responded with error status
-      throw new Error(`API Error: ${error.response.status} ${error.response.statusText}`)
+      const status = error.response.status
+      const statusText = error.response.statusText || 'Unknown error'
+      
+      // Handle 401 Unauthorized specifically
+      if (status === 401) {
+        throw new Error(`API Error: 401 Unauthorized - Authentication required`)
+      }
+      
+      throw new Error(`API Error: ${status} ${statusText}`)
     } else if (error.request) {
-      // Request made but no response received
+      // Request made but no response received (timeout or network error)
+      if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+        throw new Error('API Error: Request timeout - server is not responding')
+      }
       throw new Error('API Error: No response received from server')
     } else {
       // Something else happened
