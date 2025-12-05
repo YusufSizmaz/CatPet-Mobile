@@ -7,6 +7,8 @@ import { useAuth } from '../contexts/AuthContext'
 import { ANIMAL_TYPE_LABELS, GENDER_LABELS } from '../utils/constants'
 import { Ionicons } from '@expo/vector-icons'
 import { favoritesAPI, animalsAPIExtended } from '../services/api'
+import PhoneModal from '../components/PhoneModal'
+import SuccessDialog from '../components/SuccessDialog'
 
 export default function AnimalDetailScreen() {
   const route = useRoute()
@@ -19,6 +21,19 @@ export default function AnimalDetailScreen() {
   const [isFavorite, setIsFavorite] = useState(false)
   const [loadingFavorite, setLoadingFavorite] = useState(false)
   const [loadingPhone, setLoadingPhone] = useState(false)
+  const [showPhoneModal, setShowPhoneModal] = useState(false)
+  const [phoneData, setPhoneData] = useState<{ ownerName: string; phone: string } | null>(null)
+  const [errorDialog, setErrorDialog] = useState<{
+    visible: boolean
+    title: string
+    message: string
+    type: 'success' | 'error' | 'info'
+  }>({
+    visible: false,
+    title: '',
+    message: '',
+    type: 'info',
+  })
 
   // Load favorite status
   useEffect(() => {
@@ -98,23 +113,32 @@ export default function AnimalDetailScreen() {
 
   const handleCall = async () => {
     if (!user) {
-      Alert.alert('Giriş Gerekli', 'Telefon numarasını görmek için giriş yapmalısınız')
+      setErrorDialog({
+        visible: true,
+        title: 'Giriş Gerekli',
+        message: 'Telefon numarasını görmek için giriş yapmalısınız.',
+        type: 'info',
+      })
       return
     }
 
     if (!backendUser?.verify) {
-      Alert.alert(
-        'Hesap Doğrulanmamış',
-        'Telefon numarasını görmek için hesabınızı doğrulamanız gerekmektedir.'
-      )
+      setErrorDialog({
+        visible: true,
+        title: 'Hesap Doğrulanmamış',
+        message: 'Telefon numarasını görmek için hesabınızı doğrulamanız gerekmektedir.',
+        type: 'info',
+      })
       return
     }
 
     if (!backendUser.phone) {
-      Alert.alert(
-        'Telefon Numarası Yok',
-        'Telefon numaranızı profil sayfanızdan eklemeniz gerekmektedir.'
-      )
+      setErrorDialog({
+        visible: true,
+        title: 'Telefon Numarası Yok',
+        message: 'Telefon numaranızı profil sayfanızdan eklemeniz gerekmektedir.',
+        type: 'info',
+      })
       return
     }
 
@@ -124,25 +148,29 @@ export default function AnimalDetailScreen() {
       const result = await animalsAPIExtended.getOwnerPhone(animal!.id, token)
       
       if (result.error) {
-        Alert.alert('Hata', result.message || 'Telefon numarası alınamadı')
+        setErrorDialog({
+          visible: true,
+          title: 'Hata',
+          message: result.message || 'Telefon numarası alınamadı.',
+          type: 'error',
+        })
         return
       }
 
       if (result.phone) {
-        Alert.alert(
-          'Telefon Numarası',
-          `${result.ownerName || 'İlan Sahibi'}: ${result.phone}`,
-          [
-            { text: 'İptal', style: 'cancel' },
-            {
-              text: 'Ara',
-              onPress: () => Linking.openURL(`tel:${result.phone}`),
-            },
-          ]
-        )
+        setPhoneData({
+          ownerName: result.ownerName || 'İlan Sahibi',
+          phone: result.phone,
+        })
+        setShowPhoneModal(true)
       }
     } catch (error: any) {
-      Alert.alert('Hata', error.message || 'Telefon numarası alınırken bir hata oluştu')
+      setErrorDialog({
+        visible: true,
+        title: 'Hata',
+        message: error.message || 'Telefon numarası alınırken bir hata oluştu.',
+        type: 'error',
+      })
     } finally {
       setLoadingPhone(false)
     }
@@ -413,6 +441,28 @@ export default function AnimalDetailScreen() {
           </View>
         </View>
       </View>
+
+      {/* Phone Modal */}
+      {phoneData && (
+        <PhoneModal
+          visible={showPhoneModal}
+          ownerName={phoneData.ownerName}
+          phone={phoneData.phone}
+          onClose={() => {
+            setShowPhoneModal(false)
+            setPhoneData(null)
+          }}
+        />
+      )}
+
+      {/* Error/Info Dialog */}
+      <SuccessDialog
+        visible={errorDialog.visible}
+        title={errorDialog.title}
+        message={errorDialog.message}
+        type={errorDialog.type}
+        onClose={() => setErrorDialog({ ...errorDialog, visible: false })}
+      />
     </ScrollView>
   )
 }

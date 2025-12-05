@@ -1,17 +1,36 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Dimensions } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useAuth } from '../contexts/AuthContext'
 import { useNavigation } from '@react-navigation/native'
 import { Ionicons } from '@expo/vector-icons'
 
-const { width } = Dimensions.get('window')
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window')
+
+// Responsive helper functions
+const getResponsiveSize = (size: number) => {
+  const scale = SCREEN_WIDTH / 375 // Base width (iPhone X)
+  return Math.round(size * scale)
+}
+
+const getResponsivePadding = (padding: number) => {
+  const scale = SCREEN_WIDTH / 375
+  return Math.max(12, Math.round(padding * scale))
+}
 
 export default function HomeScreen() {
   const { user } = useAuth()
   const navigation = useNavigation()
   const insets = useSafeAreaInsets()
   const isLoggedIn = !!user
+  const [dimensions, setDimensions] = useState({ width: SCREEN_WIDTH, height: SCREEN_HEIGHT })
+
+  useEffect(() => {
+    const subscription = Dimensions.addEventListener('change', ({ window }) => {
+      setDimensions({ width: window.width, height: window.height })
+    })
+    return () => subscription?.remove()
+  }, [])
 
   const stats = [
     { icon: 'heart', value: '500+', label: 'Sahiplendirilen Dost', color: '#FF7A00' },
@@ -101,14 +120,14 @@ export default function HomeScreen() {
           </View>
           <View style={styles.heroContent}>
             <View style={styles.heroBadge}>
-              <Ionicons name="sparkles" size={16} color="#FF7A00" />
-              <Text style={styles.heroBadgeText}>Tüm Hayvan Dostlarımız İçin</Text>
+              <Ionicons name="sparkles" size={getResponsiveSize(16)} color="#FF7A00" />
+              <Text style={styles.heroBadgeText} numberOfLines={1}>Tüm Hayvan Dostlarımız İçin</Text>
             </View>
             <Text style={styles.title}>
-              Sevgi Dolu Bir Yuvaya{'\n'}Kavuşmaları İçin El Ele
+              Hayvan Dostlarımız İçin{'\n'}Birlikte Güçlüyüz
             </Text>
             <Text style={styles.description}>
-              CatPet, Türkiye genelindeki tüm hayvan dostlarımızı sahiplendirme, besleme ve bilgilendirme misyonuyla bir araya getiren bir topluluk platformudur.
+              CatPet, tamamen ücretsiz bir sosyal sorumluluk projesidir. Kayıp hayvan bulma, sahiplendirme, blog, forum ve mama noktaları gibi tüm özellikleri tek bir platformda sunuyoruz. Hayvan dostlarımız için birlikte daha güçlüyüz. Siz de bize katılın ve bu güzel projeye destek olun!
             </Text>
             <View style={styles.heroActions}>
               <TouchableOpacity
@@ -116,36 +135,40 @@ export default function HomeScreen() {
                 onPress={() => navigation.navigate('Animals' as never)}
                 activeOpacity={0.8}
               >
-                <Ionicons name="compass" size={20} color="#fff" />
-                <Text style={styles.heroButtonText}>Keşfetmeye Başla</Text>
+                <Ionicons name="compass" size={getResponsiveSize(22)} color="#fff" />
+                <Text style={styles.heroButtonText} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.85}>
+                  Keşfetmeye Başla
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.heroButton, styles.heroButtonOutline]}
                 onPress={() => navigation.navigate('About' as never)}
                 activeOpacity={0.8}
               >
-                <Ionicons name="information-circle" size={20} color="#FF7A00" />
-                <Text style={[styles.heroButtonText, styles.heroButtonTextOutline]}>Hakkımızda</Text>
+                <Ionicons name="information-circle" size={getResponsiveSize(22)} color="#FF7A00" />
+                <Text style={[styles.heroButtonText, styles.heroButtonTextOutline]} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.85}>
+                  Hakkımızda
+                </Text>
               </TouchableOpacity>
             </View>
             <View style={styles.heroFeatures}>
               <View style={styles.heroFeature}>
-                <View style={styles.heroFeatureIcon}>
-                  <Ionicons name="checkmark-circle" size={18} color="#10b981" />
-                </View>
-                <Text style={styles.heroFeatureText}>Tamamen Ücretsiz</Text>
+                <Ionicons name="checkmark-circle" size={getResponsiveSize(24)} color="#10b981" />
+                <Text style={styles.heroFeatureText} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.85}>
+                  Tamamen Ücretsiz
+                </Text>
               </View>
               <View style={styles.heroFeature}>
-                <View style={styles.heroFeatureIcon}>
-                  <Ionicons name="checkmark-circle" size={18} color="#10b981" />
-                </View>
-                <Text style={styles.heroFeatureText}>Kolay Kullanım</Text>
+                <Ionicons name="checkmark-circle" size={getResponsiveSize(24)} color="#10b981" />
+                <Text style={styles.heroFeatureText} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.85}>
+                  Kolay Kullanım
+                </Text>
               </View>
               <View style={styles.heroFeature}>
-                <View style={styles.heroFeatureIcon}>
-                  <Ionicons name="checkmark-circle" size={18} color="#10b981" />
-                </View>
-                <Text style={styles.heroFeatureText}>Güvenli Platform</Text>
+                <Ionicons name="checkmark-circle" size={getResponsiveSize(24)} color="#10b981" />
+                <Text style={styles.heroFeatureText} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.85}>
+                  Güvenli Platform
+                </Text>
               </View>
             </View>
           </View>
@@ -153,15 +176,15 @@ export default function HomeScreen() {
 
         {/* Stats Section */}
         <View style={styles.statsSection}>
-          <Text style={styles.statsTitle}>Topluluğumuzun Gücü</Text>
+          <Text style={styles.statsTitle} numberOfLines={1}>Topluluğumuzun Gücü</Text>
           <View style={styles.statsGrid}>
             {stats.map((stat, index) => (
               <View key={index} style={styles.statCard}>
                 <View style={[styles.statIconContainer, { backgroundColor: `${stat.color}15` }]}>
-                  <Ionicons name={stat.icon as any} size={24} color={stat.color} />
+                  <Ionicons name={stat.icon as any} size={getResponsiveSize(20)} color={stat.color} />
                 </View>
-                <Text style={[styles.statValue, { color: stat.color }]}>{stat.value}</Text>
-                <Text style={styles.statLabel}>{stat.label}</Text>
+                <Text style={[styles.statValue, { color: stat.color }]} numberOfLines={1}>{stat.value}</Text>
+                <Text style={styles.statLabel} numberOfLines={2}>{stat.label}</Text>
               </View>
             ))}
           </View>
@@ -194,15 +217,15 @@ export default function HomeScreen() {
                   <Text style={styles.quickActionDescription}>{action.description}</Text>
                 </View>
                 <View style={styles.quickActionArrow}>
-                  <Ionicons name="chevron-forward" size={20} color={action.color} />
+                  <Ionicons name="chevron-forward" size={getResponsiveSize(20)} color={action.color} />
                 </View>
               </TouchableOpacity>
             ))}
           </View>
           {!isLoggedIn && (
             <View style={styles.registerPrompt}>
-              <Ionicons name="star" size={20} color="#FF7A00" />
-              <Text style={styles.registerPromptText}>
+              <Ionicons name="star" size={getResponsiveSize(20)} color="#FF7A00" />
+              <Text style={styles.registerPromptText} numberOfLines={2}>
                 <Text style={styles.registerPromptBold}>Daha fazla özellik için:</Text>{' '}
                 Ücretsiz hesap oluşturun
               </Text>
@@ -214,7 +237,7 @@ export default function HomeScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <View style={styles.featuresBadge}>
-              <Ionicons name="sparkles" size={16} color="#FF7A00" />
+              <Ionicons name="sparkles" size={getResponsiveSize(16)} color="#FF7A00" />
               <Text style={styles.featuresBadgeText}>Özelliklerimiz</Text>
             </View>
             <Text style={styles.sectionTitle}>Platformumuzun Sundukları</Text>
@@ -231,13 +254,13 @@ export default function HomeScreen() {
                 activeOpacity={0.8}
               >
                 <View style={[styles.featureIconContainer, { backgroundColor: `${feature.color}15` }]}>
-                  <Ionicons name={feature.icon as any} size={36} color={feature.color} />
+                  <Ionicons name={feature.icon as any} size={getResponsiveSize(36)} color={feature.color} />
                 </View>
-                <Text style={styles.featureTitle}>{feature.title}</Text>
-                <Text style={styles.featureDescription}>{feature.description}</Text>
+                <Text style={styles.featureTitle} numberOfLines={2}>{feature.title}</Text>
+                <Text style={styles.featureDescription} numberOfLines={4}>{feature.description}</Text>
                 <View style={styles.featureLink}>
-                  <Text style={[styles.featureLinkText, { color: feature.color }]}>{feature.linkText}</Text>
-                  <Ionicons name="arrow-forward-circle" size={20} color={feature.color} />
+                  <Text style={[styles.featureLinkText, { color: feature.color }]} numberOfLines={1}>{feature.linkText}</Text>
+                  <Ionicons name="arrow-forward-circle" size={getResponsiveSize(20)} color={feature.color} />
                 </View>
               </TouchableOpacity>
             ))}
@@ -320,10 +343,11 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 122, 0, 0.07)',
   },
   heroContent: {
-    padding: 24,
+    paddingHorizontal: getResponsivePadding(24),
+    paddingVertical: getResponsivePadding(24),
     alignItems: 'center',
-    paddingTop: 32,
-    paddingBottom: 40,
+    paddingTop: getResponsivePadding(32),
+    paddingBottom: getResponsivePadding(40),
     position: 'relative',
     zIndex: 1,
   },
@@ -331,10 +355,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#fff',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
+    paddingHorizontal: getResponsivePadding(20),
+    paddingVertical: getResponsivePadding(10),
     borderRadius: 28,
-    marginBottom: 24,
+    marginBottom: getResponsivePadding(24),
     gap: 8,
     shadowColor: '#FF7A00',
     shadowOffset: { width: 0, height: 4 },
@@ -343,47 +367,54 @@ const styles = StyleSheet.create({
     elevation: 5,
     borderWidth: 1.5,
     borderColor: '#FFE5CC',
+    maxWidth: '95%',
   },
   heroBadgeText: {
-    fontSize: 13,
+    fontSize: getResponsiveSize(14),
     fontWeight: '700',
     color: '#FF7A00',
     letterSpacing: 0.3,
+    flexShrink: 1,
   },
   title: {
-    fontSize: 34,
+    fontSize: getResponsiveSize(36),
     fontWeight: '800',
-    marginBottom: 18,
+    marginBottom: getResponsivePadding(20),
     color: '#1a1a1a',
     textAlign: 'center',
-    lineHeight: 42,
-    letterSpacing: -0.8,
-    paddingHorizontal: 4,
+    lineHeight: getResponsiveSize(44),
+    letterSpacing: -0.5,
+    paddingHorizontal: getResponsivePadding(8),
   },
   description: {
-    fontSize: 16,
-    color: '#4b5563',
-    lineHeight: 25,
+    fontSize: getResponsiveSize(17),
+    color: '#374151',
+    lineHeight: getResponsiveSize(26),
     textAlign: 'center',
-    marginBottom: 32,
-    paddingHorizontal: 12,
-    fontWeight: '400',
+    marginBottom: getResponsivePadding(36),
+    paddingHorizontal: getResponsivePadding(16),
+    fontWeight: '500',
   },
   heroActions: {
     flexDirection: 'row',
-    gap: 12,
-    marginBottom: 24,
+    flexWrap: 'wrap',
+    gap: getResponsivePadding(12),
+    marginBottom: getResponsivePadding(24),
     width: '100%',
+    justifyContent: 'center',
   },
   heroButton: {
-    flex: 1,
+    flex: SCREEN_WIDTH < 375 ? 1 : undefined,
+    minWidth: SCREEN_WIDTH < 375 ? '100%' : Math.max(160, (SCREEN_WIDTH - getResponsivePadding(60)) / 2),
+    maxWidth: SCREEN_WIDTH < 375 ? '100%' : (SCREEN_WIDTH - getResponsivePadding(60)) / 2,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     backgroundColor: '#FF7A00',
-    padding: 17,
-    borderRadius: 18,
-    gap: 8,
+    paddingVertical: getResponsivePadding(16),
+    paddingHorizontal: getResponsivePadding(14),
+    borderRadius: 20,
+    gap: getResponsivePadding(8),
     shadowColor: '#FF7A00',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.4,
@@ -402,9 +433,10 @@ const styles = StyleSheet.create({
   },
   heroButtonText: {
     color: '#fff',
-    fontSize: 15,
+    fontSize: getResponsiveSize(15),
     fontWeight: '700',
-    letterSpacing: 0.3,
+    letterSpacing: 0.2,
+    flex: 1,
   },
   heroButtonTextOutline: {
     color: '#FF7A00',
@@ -412,38 +444,44 @@ const styles = StyleSheet.create({
   heroFeatures: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: 20,
+    justifyContent: 'space-between',
+    gap: getResponsivePadding(12),
     width: '100%',
+    paddingHorizontal: getResponsivePadding(4),
   },
   heroFeature: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    justifyContent: 'flex-start',
+    gap: getResponsivePadding(8),
     backgroundColor: '#fff',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: getResponsivePadding(14),
+    paddingVertical: getResponsivePadding(14),
     borderRadius: 20,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 5,
+    width: SCREEN_WIDTH < 375 ? '100%' : (SCREEN_WIDTH - getResponsivePadding(60)) / 2 - getResponsivePadding(6),
+    minWidth: SCREEN_WIDTH < 375 ? '100%' : Math.max(150, (SCREEN_WIDTH - getResponsivePadding(60)) / 2 - getResponsivePadding(6)),
   },
   heroFeatureIcon: {
     // Icon wrapper
   },
   heroFeatureText: {
-    fontSize: 13,
-    color: '#374151',
-    fontWeight: '600',
+    fontSize: getResponsiveSize(15),
+    color: '#1a1a1a',
+    fontWeight: '700',
+    flex: 1,
+    flexWrap: 'wrap',
   },
   statsSection: {
     backgroundColor: '#fff',
-    marginHorizontal: 20,
-    marginBottom: 32,
+    marginHorizontal: getResponsivePadding(20),
+    marginBottom: getResponsivePadding(32),
     borderRadius: 20,
-    padding: 24,
+    padding: getResponsivePadding(20),
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
@@ -451,70 +489,71 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   statsTitle: {
-    fontSize: 20,
+    fontSize: getResponsiveSize(20),
     fontWeight: '800',
     color: '#1a1a1a',
-    marginBottom: 20,
+    marginBottom: getResponsivePadding(16),
     textAlign: 'center',
   },
   statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 16,
+    gap: getResponsivePadding(10),
+    justifyContent: 'space-between',
   },
   statCard: {
-    flex: 1,
-    minWidth: (width - 80) / 2,
+    width: SCREEN_WIDTH < 375 ? '100%' : (SCREEN_WIDTH - getResponsivePadding(80)) / 2 - getResponsivePadding(5),
+    minWidth: SCREEN_WIDTH < 375 ? '100%' : Math.max(140, (SCREEN_WIDTH - getResponsivePadding(80)) / 2 - getResponsivePadding(5)),
     alignItems: 'center',
-    padding: 16,
+    padding: getResponsivePadding(12),
     backgroundColor: '#fff',
-    borderRadius: 16,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: '#FFE5CC',
   },
   statIconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 16,
+    width: getResponsiveSize(44),
+    height: getResponsiveSize(44),
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
+    marginBottom: getResponsivePadding(8),
   },
   statValue: {
-    fontSize: 24,
+    fontSize: getResponsiveSize(20),
     fontWeight: '800',
-    marginBottom: 4,
+    marginBottom: getResponsivePadding(2),
   },
   statLabel: {
-    fontSize: 11,
+    fontSize: getResponsiveSize(10),
     color: '#6b7280',
     textAlign: 'center',
     fontWeight: '600',
   },
   section: {
-    marginBottom: 40,
-    paddingHorizontal: 20,
+    marginBottom: getResponsivePadding(40),
+    paddingHorizontal: getResponsivePadding(20),
   },
   sectionHeader: {
-    marginBottom: 24,
+    marginBottom: getResponsivePadding(24),
   },
   sectionHeaderTop: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 8,
+    gap: getResponsivePadding(8),
+    marginBottom: getResponsivePadding(8),
   },
   sectionTitle: {
-    fontSize: 26,
+    fontSize: getResponsiveSize(26),
     fontWeight: '800',
-    marginBottom: 8,
+    marginBottom: getResponsivePadding(8),
     color: '#1a1a1a',
     letterSpacing: -0.5,
   },
   sectionSubtitle: {
-    fontSize: 15,
+    fontSize: getResponsiveSize(15),
     color: '#6b7280',
-    lineHeight: 22,
+    lineHeight: getResponsiveSize(22),
   },
   featuresBadge: {
     flexDirection: 'row',
@@ -530,20 +569,20 @@ const styles = StyleSheet.create({
     borderColor: '#FFE5CC',
   },
   featuresBadgeText: {
-    fontSize: 12,
+    fontSize: getResponsiveSize(12),
     fontWeight: '700',
     color: '#FF7A00',
     letterSpacing: 0.3,
   },
   quickActions: {
-    gap: 14,
+    gap: getResponsivePadding(14),
   },
   quickActionCard: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#fff',
     borderRadius: 18,
-    padding: 20,
+    padding: getResponsivePadding(20),
     borderLeftWidth: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -552,59 +591,63 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   quickActionIconContainer: {
-    width: 64,
-    height: 64,
+    width: getResponsiveSize(64),
+    height: getResponsiveSize(64),
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 16,
+    marginRight: getResponsivePadding(16),
+    flexShrink: 0,
   },
   quickActionContent: {
     flex: 1,
   },
   quickActionTitle: {
-    fontSize: 18,
+    fontSize: getResponsiveSize(18),
     fontWeight: '800',
-    marginBottom: 4,
+    marginBottom: getResponsivePadding(4),
     color: '#1a1a1a',
     letterSpacing: -0.3,
+    flexShrink: 1,
   },
   quickActionDescription: {
-    fontSize: 13,
+    fontSize: getResponsiveSize(13),
     color: '#6b7280',
-    lineHeight: 18,
+    lineHeight: getResponsiveSize(18),
+    flexShrink: 1,
   },
   quickActionArrow: {
-    marginLeft: 8,
+    marginLeft: getResponsivePadding(8),
+    flexShrink: 0,
   },
   registerPrompt: {
-    marginTop: 20,
+    marginTop: getResponsivePadding(20),
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 18,
+    padding: getResponsivePadding(18),
     backgroundColor: '#FFF7F0',
     borderRadius: 16,
     borderWidth: 1,
     borderColor: '#FFE5CC',
-    gap: 12,
+    gap: getResponsivePadding(12),
   },
   registerPromptText: {
-    fontSize: 14,
+    fontSize: getResponsiveSize(14),
     color: '#1a1a1a',
     flex: 1,
-    lineHeight: 20,
+    lineHeight: getResponsiveSize(20),
   },
   registerPromptBold: {
     fontWeight: '700',
     color: '#FF7A00',
   },
   featuresGrid: {
-    gap: 20,
+    gap: getResponsivePadding(20),
   },
   featureCard: {
     backgroundColor: '#fff',
     borderRadius: 20,
-    padding: 24,
+    padding: getResponsivePadding(24),
     borderWidth: 1,
     borderColor: '#e5e7eb',
     shadowColor: '#000',
@@ -614,43 +657,43 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   featureIconContainer: {
-    width: 72,
-    height: 72,
+    width: getResponsiveSize(72),
+    height: getResponsiveSize(72),
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 20,
+    marginBottom: getResponsivePadding(20),
   },
   featureTitle: {
-    fontSize: 20,
+    fontSize: getResponsiveSize(20),
     fontWeight: '800',
-    marginBottom: 10,
+    marginBottom: getResponsivePadding(10),
     color: '#1a1a1a',
     letterSpacing: -0.3,
   },
   featureDescription: {
-    fontSize: 15,
+    fontSize: getResponsiveSize(15),
     color: '#6b7280',
-    lineHeight: 22,
-    marginBottom: 20,
+    lineHeight: getResponsiveSize(22),
+    marginBottom: getResponsivePadding(20),
   },
   featureLink: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: getResponsivePadding(8),
   },
   featureLinkText: {
-    fontSize: 15,
+    fontSize: getResponsiveSize(15),
     fontWeight: '700',
     letterSpacing: 0.2,
   },
   ctaSection: {
     backgroundColor: '#fff',
     borderRadius: 24,
-    padding: 32,
+    padding: getResponsivePadding(32),
     alignItems: 'center',
-    marginHorizontal: 20,
-    marginBottom: 20,
+    marginHorizontal: getResponsivePadding(20),
+    marginBottom: getResponsivePadding(20),
     borderWidth: 2,
     borderColor: '#FFE5CC',
     shadowColor: '#FF7A00',
@@ -660,37 +703,37 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   ctaIconContainer: {
-    width: 80,
-    height: 80,
+    width: getResponsiveSize(80),
+    height: getResponsiveSize(80),
     borderRadius: 40,
     backgroundColor: '#FFF7F0',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 20,
+    marginBottom: getResponsivePadding(20),
   },
   ctaTitle: {
-    fontSize: 26,
+    fontSize: getResponsiveSize(26),
     fontWeight: '800',
-    marginBottom: 12,
+    marginBottom: getResponsivePadding(12),
     color: '#1a1a1a',
     textAlign: 'center',
     letterSpacing: -0.5,
   },
   ctaText: {
-    fontSize: 16,
+    fontSize: getResponsiveSize(16),
     color: '#6b7280',
     textAlign: 'center',
-    marginBottom: 24,
-    lineHeight: 24,
+    marginBottom: getResponsivePadding(24),
+    lineHeight: getResponsiveSize(24),
   },
   ctaButton: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FF7A00',
-    paddingHorizontal: 32,
-    paddingVertical: 16,
+    paddingHorizontal: getResponsivePadding(32),
+    paddingVertical: getResponsivePadding(16),
     borderRadius: 16,
-    gap: 8,
+    gap: getResponsivePadding(8),
     shadowColor: '#FF7A00',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
@@ -699,7 +742,7 @@ const styles = StyleSheet.create({
   },
   ctaButtonText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: getResponsiveSize(16),
     fontWeight: '700',
     letterSpacing: 0.3,
   },

@@ -30,6 +30,7 @@ export default function ForumDetailScreen() {
   const [submittingComment, setSubmittingComment] = useState(false)
   const [editingCommentId, setEditingCommentId] = useState<number | null>(null)
   const [editingCommentContent, setEditingCommentContent] = useState('')
+  const [originalCommentContent, setOriginalCommentContent] = useState('')
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [commentToDeleteId, setCommentToDeleteId] = useState<number | null>(null)
   const hasLoadedRef = useRef<number | null>(null)
@@ -302,10 +303,19 @@ export default function ForumDetailScreen() {
                           {editingCommentId === comment.id ? (
                             <>
                               <TouchableOpacity
-                                style={styles.actionButton}
+                                style={[
+                                  styles.actionButton,
+                                  !hasCommentChanges() && styles.actionButtonDisabled
+                                ]}
                                 onPress={() => handleSaveEdit(comment.id)}
+                                disabled={!hasCommentChanges()}
                               >
-                                <Text style={styles.actionButtonText}>Kaydet</Text>
+                                <Text style={[
+                                  styles.actionButtonText,
+                                  !hasCommentChanges() && styles.actionButtonTextDisabled
+                                ]}>
+                                  Kaydet
+                                </Text>
                               </TouchableOpacity>
                               <TouchableOpacity style={styles.actionButton} onPress={handleCancelEdit}>
                                 <Text style={styles.actionButtonText}>İptal</Text>
@@ -596,6 +606,13 @@ const styles = StyleSheet.create({
   actionButton: {
     paddingHorizontal: 12,
     paddingVertical: 6,
+  },
+  actionButtonDisabled: {
+    opacity: 0.5,
+    backgroundColor: '#e5e7eb',
+  },
+  actionButtonTextDisabled: {
+    color: '#999',
     borderRadius: 6,
     backgroundColor: '#e5e5e5',
   },
