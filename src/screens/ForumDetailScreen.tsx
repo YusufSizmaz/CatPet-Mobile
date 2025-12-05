@@ -9,11 +9,13 @@ import {
   ActivityIndicator,
   Alert,
   Modal,
+  Image,
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useRoute, useNavigation } from '@react-navigation/native'
 import { useAuth } from '../contexts/AuthContext'
 import { forumAPI } from '../services/api'
+import { getProfilePhotoUrl, hasProfilePhoto } from '../utils/profilePhoto'
 
 export default function ForumDetailScreen() {
   const route = useRoute()
@@ -117,16 +119,27 @@ export default function ForumDetailScreen() {
   const handleStartEdit = (comment: any) => {
     setEditingCommentId(comment.id)
     setEditingCommentContent(comment.content)
+    setOriginalCommentContent(comment.content)
+  }
+
+  const hasCommentChanges = () => {
+    return editingCommentContent.trim() !== originalCommentContent.trim()
   }
 
   const handleCancelEdit = () => {
     setEditingCommentId(null)
     setEditingCommentContent('')
+    setOriginalCommentContent('')
   }
 
   const handleSaveEdit = async (commentId: number) => {
     if (!user || !editingCommentContent.trim()) {
       Alert.alert('Hata', 'Lütfen yorum içeriğini girin')
+      return
+    }
+
+    if (!hasCommentChanges()) {
+      Alert.alert('Bilgi', 'Yorum içeriğinde değişiklik yapılmadı')
       return
     }
 
@@ -136,6 +149,7 @@ export default function ForumDetailScreen() {
       setComments((prev) => prev.map((c) => (c.id === commentId ? updatedComment : c)))
       setEditingCommentId(null)
       setEditingCommentContent('')
+      setOriginalCommentContent('')
     } catch (err: any) {
       Alert.alert('Hata', err.message || 'Yorum güncellenirken bir hata oluştu')
     }
@@ -199,14 +213,11 @@ export default function ForumDetailScreen() {
           <Text style={styles.topicTitle}>{topic.title}</Text>
           <View style={styles.topicMeta}>
             <View style={styles.authorInfo}>
-              {topic.createdUser?.profilePhoto ? (
-                <View style={styles.avatarContainer}>
-                  <Text style={styles.avatarText}>
-                    {isLoggedIn
-                      ? (topic.createdUser.firstName || 'K')[0].toUpperCase()
-                      : '?'}
-                  </Text>
-                </View>
+              {hasProfilePhoto(topic.createdUser) ? (
+                <Image
+                  source={{ uri: getProfilePhotoUrl(topic.createdUser) }}
+                  style={styles.avatarImage}
+                />
               ) : (
                 <View style={styles.avatarContainer}>
                   <Text style={styles.avatarText}>
@@ -285,11 +296,18 @@ export default function ForumDetailScreen() {
                   <View key={comment.id} style={styles.commentItem}>
                     <View style={styles.commentHeader}>
                       <View style={styles.commentAuthor}>
-                        <View style={styles.commentAvatar}>
-                          <Text style={styles.commentAvatarText}>
-                            {isLoggedIn ? (comment.createdUser?.firstName || 'K')[0].toUpperCase() : '?'}
-                          </Text>
-                        </View>
+                        {hasProfilePhoto(comment.createdUser) ? (
+                          <Image
+                            source={{ uri: getProfilePhotoUrl(comment.createdUser) }}
+                            style={styles.commentAvatarImage}
+                          />
+                        ) : (
+                          <View style={styles.commentAvatar}>
+                            <Text style={styles.commentAvatarText}>
+                              {isLoggedIn ? (comment.createdUser?.firstName || 'K')[0].toUpperCase() : '?'}
+                            </Text>
+                          </View>
+                        )}
                         <View>
                           <Text style={styles.commentAuthorName}>
                             {displayName}
@@ -456,6 +474,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  avatarImage: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#e5e5e5',
+  },
   avatarText: {
     color: '#fff',
     fontSize: 14,
@@ -578,6 +602,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#FF7A00',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  commentAvatarImage: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#e5e5e5',
   },
   commentAvatarText: {
     color: '#fff',

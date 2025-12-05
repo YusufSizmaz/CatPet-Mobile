@@ -7,6 +7,7 @@ import { BlogPost } from '../types/blog.types'
 import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '../contexts/AuthContext'
 import { forumAPI } from '../services/api'
+import { getProfilePhotoUrl, hasProfilePhoto } from '../utils/profilePhoto'
 
 const categories = ['all', 'cats', 'dogs', 'birds', 'fish', 'rodents', 'other']
 const categoryLabels: Record<string, string> = {
@@ -280,9 +281,9 @@ export default function BlogScreen() {
                       onPress={() => navigation.navigate('ForumDetail' as never, { id: topic.id } as never)}
                     >
                       <View style={styles.forumAvatar}>
-                        {topic.createdUser?.profilePhoto ? (
+                        {hasProfilePhoto(topic.createdUser) ? (
                           <Image
-                            source={{ uri: topic.createdUser.profilePhoto }}
+                            source={{ uri: getProfilePhotoUrl(topic.createdUser) }}
                             style={styles.forumAvatarImage}
                           />
                         ) : (

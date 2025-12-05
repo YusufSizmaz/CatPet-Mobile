@@ -290,6 +290,12 @@ export default function LoginScreen() {
         </Animated.View>
       </ScrollView>
 
+      {/* CodynLab.dev Signature - Fixed at bottom */}
+      <View style={[styles.signatureContainer, { paddingBottom: Math.max(insets.bottom, 20) }]}>
+        <Text style={styles.signatureText}>Tasarım ve Yazılım</Text>
+        <Text style={styles.signatureBrand}>CodynLab.dev</Text>
+      </View>
+
       {/* Error Dialog */}
       <ErrorDialog
         visible={errorVisible}
@@ -350,7 +356,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     justifyContent: 'center',
-    paddingBottom: 40,
+    paddingBottom: 100,
   },
   content: {
     padding: 24,
@@ -519,5 +525,28 @@ const styles = StyleSheet.create({
   },
   decorativeIcon: {
     opacity: 0.7,
+  },
+  signatureContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    paddingTop: 12,
+    paddingBottom: 16,
+
+  },
+  signatureText: {
+    fontSize: 10,
+    color: '#9ca3af',
+    fontWeight: '400',
+    marginBottom: 2,
+    letterSpacing: 0.3,
+  },
+  signatureBrand: {
+    fontSize: 12,
+    color: '#6b7280',
+    fontWeight: '600',
+    letterSpacing: 0.3,
   },
 })

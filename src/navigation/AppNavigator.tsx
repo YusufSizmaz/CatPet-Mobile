@@ -141,13 +141,20 @@ export default function AppNavigator() {
       if (welcomeData) {
         const parsed = JSON.parse(welcomeData)
         console.log('✅ Welcome screen flag found, showing welcome:', parsed)
+        // Set state immediately
         setShowWelcome(parsed)
-        await AsyncStorage.removeItem('showWelcomeScreen')
+        // Remove flag after a small delay to ensure state is set
+        setTimeout(async () => {
+          await AsyncStorage.removeItem('showWelcomeScreen')
+          console.log('🗑️ Welcome screen flag removed')
+        }, 500)
       } else {
         console.log('❌ No welcome screen flag found')
+        setShowWelcome(null)
       }
     } catch (error) {
       console.error('Error checking welcome screen:', error)
+      setShowWelcome(null)
     }
   }
 
@@ -157,10 +164,10 @@ export default function AppNavigator() {
 
   useEffect(() => {
     if (user) {
-      // Small delay to ensure AsyncStorage write is complete
+      // Delay to ensure AsyncStorage write is complete (increased delay for reliability)
       const timer = setTimeout(() => {
         checkWelcomeScreen()
-      }, 100)
+      }, 300)
       return () => clearTimeout(timer)
     } else {
       setShowWelcome(null)
@@ -195,6 +202,7 @@ export default function AppNavigator() {
   return (
     <NavigationContainer>
       <Stack.Navigator
+        key={showWelcome ? 'welcome' : 'main'}
         initialRouteName={showWelcome ? 'Welcome' : 'Main'}
         screenOptions={{
           headerBackTitle: 'Geri',

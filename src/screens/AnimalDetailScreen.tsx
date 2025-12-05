@@ -9,6 +9,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { favoritesAPI, animalsAPIExtended } from '../services/api'
 import PhoneModal from '../components/PhoneModal'
 import SuccessDialog from '../components/SuccessDialog'
+import { getProfilePhotoUrl } from '../utils/profilePhoto'
 
 export default function AnimalDetailScreen() {
   const route = useRoute()
@@ -389,7 +390,7 @@ export default function AnimalDetailScreen() {
           <View style={styles.ownerHeader}>
             <Image
               source={{
-                uri: animal.owner?.profilePhoto || 'https://via.placeholder.com/100',
+                uri: getProfilePhotoUrl(animal.owner),
               }}
               style={[
                 styles.ownerPhoto,
