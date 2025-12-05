@@ -240,9 +240,8 @@ export default function AppNavigator() {
                 title: 'Hayvan Detayı',
                 headerStyle: {
                   backgroundColor: '#fff',
-                  borderBottomWidth: 2,
-                  borderBottomColor: '#FF7A00',
                 },
+                headerShadowVisible: false,
                 headerTintColor: '#FF7A00',
                 headerTitleStyle: {
                   fontWeight: '700',
@@ -257,9 +256,8 @@ export default function AppNavigator() {
                 title: 'Hakkımızda',
                 headerStyle: {
                   backgroundColor: '#fff',
-                  borderBottomWidth: 2,
-                  borderBottomColor: '#FF7A00',
                 },
+                headerShadowVisible: false,
                 headerTintColor: '#FF7A00',
                 headerTitleStyle: {
                   fontWeight: '700',
@@ -275,9 +273,8 @@ export default function AppNavigator() {
                 headerBackTitle: 'Bir önceki sayfa',
                 headerStyle: {
                   backgroundColor: '#fff',
-                  borderBottomWidth: 2,
-                  borderBottomColor: '#FF7A00',
                 },
+                headerShadowVisible: false,
                 headerTintColor: '#FF7A00',
                 headerTitleStyle: {
                   fontWeight: '700',
@@ -286,15 +283,14 @@ export default function AppNavigator() {
               }}
             />
             <Stack.Screen 
-              name="BlogDetail" 
+              name="BlogDetail"
               component={BlogDetailScreen}
               options={{
                 title: 'Blog Yazısı',
                 headerStyle: {
                   backgroundColor: '#fff',
-                  borderBottomWidth: 2,
-                  borderBottomColor: '#FF7A00',
                 },
+                headerShadowVisible: false,
                 headerTintColor: '#FF7A00',
                 headerTitleStyle: {
                   fontWeight: '700',
@@ -309,9 +305,8 @@ export default function AppNavigator() {
                 title: 'Forum Konusu',
                 headerStyle: {
                   backgroundColor: '#fff',
-                  borderBottomWidth: 2,
-                  borderBottomColor: '#FF7A00',
                 },
+                headerShadowVisible: false,
                 headerTintColor: '#FF7A00',
                 headerTitleStyle: {
                   fontWeight: '700',
