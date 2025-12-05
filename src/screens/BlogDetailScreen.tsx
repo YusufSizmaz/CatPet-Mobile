@@ -1,5 +1,6 @@
 import React from 'react'
 import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, ActivityIndicator, Share } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useRoute, useNavigation } from '@react-navigation/native'
 import { useBlogPost } from '../hooks/useBlog'
 import { Ionicons } from '@expo/vector-icons'
@@ -7,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons'
 export default function BlogDetailScreen() {
   const route = useRoute()
   const navigation = useNavigation()
+  const insets = useSafeAreaInsets()
   const { id } = route.params as { id: number }
   const { post, loading, error } = useBlogPost(id)
 
@@ -43,7 +45,10 @@ export default function BlogDetailScreen() {
   }
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView 
+      style={styles.container}
+      contentContainerStyle={{ paddingTop: Math.max(insets.top, 0) }}
+    >
       {post.coverImage && (
         <Image source={{ uri: post.coverImage }} style={styles.coverImage} resizeMode="cover" />
       )}

@@ -35,20 +35,32 @@ export async function signInWithGoogle(): Promise<UserCredential | null> {
   try {
     const clientId = getGoogleClientId()
     
+    // Expo'nun makeRedirectUri fonksiyonunu kullan - otomatik olarak doğru URL'i oluşturur
+    // Development'ta Expo proxy kullanır, production'da custom scheme kullanır
+    const redirectUri = AuthSession.makeRedirectUri({
+      scheme: 'catpet',
+      path: 'auth',
+    })
+    
+    if (__DEV__) {
+      console.log('🔗 Google OAuth Redirect URI:', redirectUri)
+      console.log('🔑 Google Client ID:', clientId?.substring(0, 20) + '...')
+      console.log('⚠️  NOT: Bu redirect URI\'yi Google Cloud Console\'da eklemeniz gerekiyor!')
+      console.log('   1. Google Cloud Console > APIs & Services > Credentials')
+      console.log('   2. OAuth 2.0 Client ID\'nizi seçin')
+      console.log('   3. "Authorized redirect URIs" bölümüne şu URL\'i ekleyin:')
+      console.log('      ', redirectUri)
+    }
+    
     // Request for Google OAuth
     const request = new AuthSession.AuthRequest({
       clientId: clientId,
       scopes: ['openid', 'profile', 'email'],
       responseType: AuthSession.ResponseType.IdToken,
-      redirectUri: AuthSession.makeRedirectUri({
-        scheme: 'catpet',
-        path: 'auth',
-      }),
+      redirectUri: redirectUri,
     })
 
-    const result = await request.promptAsync(discovery, {
-      useProxy: true,
-    })
+    const result = await request.promptAsync(discovery)
 
     if (result.type === 'success') {
       const { id_token } = result.params
@@ -67,11 +79,48 @@ export async function signInWithGoogle(): Promise<UserCredential | null> {
     } else if (result.type === 'cancel') {
       // User cancelled - return null instead of throwing error
       return null
+    } else if (result.type === 'error') {
+      // Handle error response
+      const error = result.error || result.params?.error
+      const errorDescription = result.params?.error_description || ''
+      
+      console.error('Google OAuth error:', error, errorDescription)
+      
+      if (error === 'access_denied') {
+        return null // User cancelled
+      }
+      
+      throw new Error(errorDescription || 'Google girişi başarısız oldu')
     } else {
       throw new Error('Google Sign-In başarısız oldu')
     }
   } catch (error: any) {
     console.error('Google Sign-In error:', error)
+    
+    // Daha açıklayıcı hata mesajları
+    if (error.message?.includes('404') || error.message?.includes('not found')) {
+      const redirectUri = AuthSession.makeRedirectUri({ scheme: 'catpet', path: 'auth' })
+      throw new Error(
+        `Google OAuth yapılandırması hatalı.\n\n` +
+        `Lütfen Google Cloud Console'da şu adımları izleyin:\n` +
+        `1. https://console.cloud.google.com/apis/credentials adresine gidin\n` +
+        `2. OAuth 2.0 Client ID'nizi seçin\n` +
+        `3. "Authorized redirect URIs" bölümüne şu URL'i ekleyin:\n` +
+        `   ${redirectUri}\n\n` +
+        `Terminal'deki log'dan tam redirect URI'yi görebilirsiniz.`
+      )
+    }
+    
+    if (error.message?.includes('redirect_uri_mismatch')) {
+      const redirectUri = AuthSession.makeRedirectUri({ scheme: 'catpet', path: 'auth' })
+      throw new Error(
+        `Redirect URI uyumsuzluğu.\n\n` +
+        `Lütfen Google Cloud Console'da şu redirect URI'yi ekleyin:\n` +
+        `${redirectUri}\n\n` +
+        `Terminal'deki log'dan tam redirect URI'yi görebilirsiniz.`
+      )
+    }
+    
     throw new Error(error.message || 'Google ile giriş başarısız oldu')
   }
 }

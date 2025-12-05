@@ -53,9 +53,13 @@ async function fetchAPI<T>(endpoint: string, options?: AxiosRequestConfig): Prom
     } else if (error.request) {
       // Request made but no response received (timeout or network error)
       if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
-        throw new Error('API Error: Request timeout - server is not responding')
+        const errorMsg = `Backend sunucusuna bağlanılamıyor.\n\nLütfen kontrol edin:\n1. Cep telefonunuz ve bilgisayarınız aynı WiFi ağında mı?\n2. Backend sunucusu ${API_URL} adresinde çalışıyor mu?\n3. Firewall ayarları backend'e erişimi engelliyor mu?`
+        console.error('❌ Backend connection timeout:', errorMsg)
+        throw new Error(errorMsg)
       }
-      throw new Error('API Error: No response received from server')
+      const errorMsg = `Backend sunucusuna bağlanılamıyor.\n\nLütfen kontrol edin:\n1. Cep telefonunuz ve bilgisayarınız aynı WiFi ağında mı?\n2. Backend sunucusu ${API_URL} adresinde çalışıyor mu?`
+      console.error('❌ Backend connection error:', errorMsg)
+      throw new Error(errorMsg)
     } else {
       // Something else happened
       throw new Error(`API Error: ${error.message}`)

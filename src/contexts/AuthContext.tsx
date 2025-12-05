@@ -32,12 +32,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   // Sync Firebase user with backend
-  const syncUserWithBackend = async (firebaseUser: FirebaseUser) => {
+  const syncUserWithBackend = async (firebaseUser: FirebaseUser, userData?: { firstName?: string; lastName?: string }) => {
     try {
       const idToken = await firebaseUser.getIdToken()
-      const userData = await authAPI.verifyToken(idToken)
-      setBackendUser(userData)
+      const backendUserData = await authAPI.verifyToken(idToken)
+      setBackendUser(backendUserData)
       await AsyncStorage.setItem('authToken', idToken)
+      
+      // If firstName/lastName provided and backend user doesn't have them, update
+      if (userData && backendUserData && backendUserData.id) {
+        const needsUpdate = 
+          (userData.firstName && !backendUserData.firstName) || 
+          (userData.lastName && !backendUserData.lastName) ||
+          (userData.firstName && backendUserData.firstName !== userData.firstName) ||
+          (userData.lastName && backendUserData.lastName !== userData.lastName)
+        
+        if (needsUpdate) {
+          try {
+            console.log('📝 Updating user firstName/lastName in backend:', { 
+              firstName: userData.firstName, 
+              lastName: userData.lastName 
+            })
+            await usersAPI.update(backendUserData.id, {
+              firstName: userData.firstName || backendUserData.firstName || null,
+              lastName: userData.lastName || backendUserData.lastName || null,
+            }, idToken)
+            // Refresh backend user data
+            const updatedUserData = await authAPI.verifyToken(idToken)
+            setBackendUser(updatedUserData)
+            console.log('✅ User firstName/lastName updated successfully')
+          } catch (updateError) {
+            console.error('❌ Failed to update user firstName/lastName:', updateError)
+          }
+        }
+      }
     } catch (error: any) {
       // Backend'e bağlanamazsa sadece debug modda log'la, uygulama çalışmaya devam etsin
       // Production'da bu hata sessizce handle edilir
@@ -84,7 +112,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Failed to update profile:', error)
     }
-    await syncUserWithBackend(userCredential.user)
+    // Sync with backend and pass firstName/lastName to ensure they're saved
+    await syncUserWithBackend(userCredential.user, { firstName, lastName })
   }
 
   const loginWithGoogle = async () => {

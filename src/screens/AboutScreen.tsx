@@ -1,8 +1,10 @@
 import React, { useState } from 'react'
 import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Linking } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 
 export default function AboutScreen() {
+  const insets = useSafeAreaInsets()
   const [openFaq, setOpenFaq] = useState<number | null>(null)
 
   const faqs = [
@@ -33,7 +35,10 @@ export default function AboutScreen() {
   }
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView 
+      style={styles.container}
+      contentContainerStyle={{ paddingTop: Math.max(insets.top, 20) }}
+    >
       <View style={styles.content}>
         {/* Hero Section */}
         <View style={styles.heroSection}>

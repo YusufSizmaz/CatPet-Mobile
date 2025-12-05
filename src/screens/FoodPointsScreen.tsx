@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, TextInput, ActivityIndicator } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useFoodPoints } from '../hooks/useFoodPoints'
 import { FoodPoint } from '../types/food-point.types'
 import { FOOD_POINT_TYPE_LABELS } from '../utils/constants'
@@ -7,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons'
 import FoodPointMap from '../components/FoodPointMap'
 
 export default function FoodPointsScreen() {
+  const insets = useSafeAreaInsets()
   const [selectedType, setSelectedType] = useState<string>('')
   const [selectedAnimalType, setSelectedAnimalType] = useState<string>('')
   const [showActiveOnly, setShowActiveOnly] = useState(true)
@@ -35,14 +37,14 @@ export default function FoodPointsScreen() {
 
       {/* Floating Filter Button */}
       <TouchableOpacity
-        style={styles.filterFloatingButton}
+        style={[styles.filterFloatingButton, { top: Math.max(insets.top, 20) }]}
         onPress={() => setShowFilters(true)}
       >
         <Ionicons name="options-outline" size={24} color="#fff" />
       </TouchableOpacity>
 
       {/* Bottom Sheet */}
-      <View style={styles.bottomSheet}>
+      <View style={[styles.bottomSheet, { paddingBottom: Math.max(insets.bottom, 0) }]}>
         <View style={styles.bottomSheetHeader}>
           <Text style={styles.bottomSheetTitle}>Mama Noktaları</Text>
           <Text style={styles.bottomSheetSubtitle}>

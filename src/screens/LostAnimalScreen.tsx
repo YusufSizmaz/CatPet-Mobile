@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react'
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, ActivityIndicator, Modal } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useAuth } from '../contexts/AuthContext'
 import { useNavigation } from '@react-navigation/native'
 import { useAnimals } from '../hooks/useAnimals'
@@ -10,6 +11,7 @@ import { Ionicons } from '@expo/vector-icons'
 export default function LostAnimalScreen() {
   const { user, loading: authLoading } = useAuth()
   const navigation = useNavigation()
+  const insets = useSafeAreaInsets()
   const [selectedType, setSelectedType] = useState<string>('')
   const [selectedCity, setSelectedCity] = useState<string>('')
   const [showCreateModal, setShowCreateModal] = useState(false)
@@ -73,7 +75,7 @@ export default function LostAnimalScreen() {
   return (
     <View style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: Math.max(insets.top, 20) }]}>
         <View style={styles.headerContent}>
           <Text style={styles.title}>Kayıp Hayvan İlanları</Text>
           <Text style={styles.subtitle}>

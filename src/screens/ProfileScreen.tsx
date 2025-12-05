@@ -11,6 +11,7 @@ import {
   Alert,
   Modal,
 } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useAuth } from '../contexts/AuthContext'
 import { useNavigation } from '@react-navigation/native'
 import { usersAPI, userSettingsAPI } from '../services/api'
@@ -19,6 +20,7 @@ import { Ionicons } from '@expo/vector-icons'
 export default function ProfileScreen() {
   const { user, backendUser, logout, refreshBackendUser } = useAuth()
   const navigation = useNavigation()
+  const insets = useSafeAreaInsets()
   const [activeTab, setActiveTab] = useState<'profile' | 'lost' | 'contributions' | 'applications' | 'blog' | 'settings'>('profile')
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
@@ -45,11 +47,35 @@ export default function ProfileScreen() {
         nickname: backendUser.nickname || '',
       })
       loadUserSettings()
+    } else if (user) {
+      // Firebase user var ama backendUser yok - minimal profil göster
+      const displayName = user.displayName || ''
+      const nameParts = displayName.split(' ')
+      setFormData({
+        firstName: nameParts[0] || '',
+        lastName: nameParts.slice(1).join(' ') || '',
+        description: '',
+        city: '',
+        phone: '',
+        nickname: '',
+      })
+      // Default settings
+      setUserSettings({
+        showGooglePhoto: true,
+        useNickname: false,
+      })
     }
-  }, [backendUser])
+  }, [backendUser, user])
 
   const loadUserSettings = async () => {
-    if (!backendUser) return
+    if (!backendUser) {
+      // Backend user yoksa default settings kullan
+      setUserSettings({
+        showGooglePhoto: true,
+        useNickname: false,
+      })
+      return
+    }
     try {
       const settings = await userSettingsAPI.getByUserId(backendUser.id)
       setUserSettings({
@@ -57,6 +83,8 @@ export default function ProfileScreen() {
         useNickname: settings.useNickname ?? false,
       })
     } catch (error) {
+      console.debug('User settings load error:', error)
+      // Hata durumunda default settings kullan
       setUserSettings({
         showGooglePhoto: true,
         useNickname: false,
@@ -65,7 +93,15 @@ export default function ProfileScreen() {
   }
 
   const handleSave = async () => {
-    if (!backendUser || !user) return
+    if (!user) return
+
+    if (!backendUser) {
+      Alert.alert(
+        'Bağlantı Hatası', 
+        'Backend sunucusuna bağlanılamıyor. Profil bilgileri kaydedilemez. Lütfen internet bağlantınızı kontrol edin.'
+      )
+      return
+    }
 
     setLoading(true)
     try {
@@ -81,6 +117,7 @@ export default function ProfileScreen() {
       await refreshBackendUser()
       Alert.alert('Başarılı', 'Profil başarıyla güncellendi')
     } catch (error: any) {
+      console.error('Profile save error:', error)
       Alert.alert('Hata', error.message || 'Profil güncellenirken bir hata oluştu')
     } finally {
       setLoading(false)
@@ -88,7 +125,15 @@ export default function ProfileScreen() {
   }
 
   const handleSettingChange = async (setting: 'showGooglePhoto' | 'useNickname', value: boolean) => {
-    if (!backendUser || !userSettings) return
+    if (!userSettings) return
+
+    if (!backendUser) {
+      Alert.alert(
+        'Bağlantı Hatası',
+        'Backend sunucusuna bağlanılamıyor. Ayarlar kaydedilemez.'
+      )
+      return
+    }
 
     const newSettings = { ...userSettings, [setting]: value }
     setUserSettings(newSettings)
@@ -98,19 +143,24 @@ export default function ProfileScreen() {
         [setting]: value,
       })
     } catch (error: any) {
+      console.error('Settings update error:', error)
       Alert.alert('Hata', 'Ayar güncellenirken bir hata oluştu')
       setUserSettings(userSettings) // Revert
     }
   }
 
   const getFullName = () => {
-    if (!backendUser) return 'Yükleniyor...'
     if (userSettings?.useNickname && formData.nickname) {
       return formData.nickname
     }
     const firstName = formData.firstName || ''
     const lastName = formData.lastName || ''
-    return `${firstName} ${lastName}`.trim() || backendUser.email || 'Kullanıcı'
+    const fullName = `${firstName} ${lastName}`.trim()
+    if (fullName) return fullName
+    if (backendUser?.email) return backendUser.email
+    if (user?.email) return user.email
+    if (user?.displayName) return user.displayName
+    return 'Kullanıcı'
   }
 
   const getProfilePhotoUrl = () => {
@@ -120,7 +170,7 @@ export default function ProfileScreen() {
     return user?.photoURL || 'https://res.cloudinary.com/dknfc65z0/image/upload/v1764186141/meerkat_svydkb.png'
   }
 
-  if (!user || !backendUser) {
+  if (!user) {
     return (
       <View style={styles.centerContainer}>
         <ActivityIndicator size="large" color="#FF7A00" />
@@ -129,17 +179,31 @@ export default function ProfileScreen() {
     )
   }
 
+  // Backend user yoksa bile sayfayı göster (Firebase user varsa)
+  const displayEmail = backendUser?.email || user?.email || 'E-posta yok'
+  const displayDate = backendUser?.createdAt 
+    ? new Date(backendUser.createdAt).toLocaleDateString('tr-TR')
+    : 'Bilinmiyor'
+
   return (
     <View style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: Math.max(insets.top, 20) }]}>
         <Image source={{ uri: getProfilePhotoUrl() }} style={styles.profilePhoto} />
         <View style={styles.headerInfo}>
           <Text style={styles.headerName}>{getFullName()}</Text>
-          <Text style={styles.headerEmail}>{backendUser.email}</Text>
+          <Text style={styles.headerEmail}>{displayEmail}</Text>
           <Text style={styles.headerDate}>
-            Katılım: {new Date(backendUser.createdAt).toLocaleDateString('tr-TR')}
+            Katılım: {displayDate}
           </Text>
+          {!backendUser && (
+            <View style={styles.backendWarning}>
+              <Ionicons name="information-circle-outline" size={14} color="#FF7A00" />
+              <Text style={styles.backendWarningText}>
+                Backend bağlantısı yok. Profil bilgileri kaydedilemez.
+              </Text>
+            </View>
+          )}
         </View>
       </View>
 
@@ -161,7 +225,7 @@ export default function ProfileScreen() {
             >
               <Ionicons
                 name={tab.icon as any}
-                size={18}
+                size={14}
                 color={activeTab === tab.key ? '#FF7A00' : '#666'}
               />
               <Text
@@ -208,7 +272,7 @@ export default function ProfileScreen() {
                 <Text style={styles.label}>E-posta Adresi</Text>
                 <TextInput
                   style={[styles.input, styles.inputDisabled]}
-                  value={backendUser.email}
+                  value={displayEmail}
                   editable={false}
                 />
               </View>
@@ -268,6 +332,12 @@ export default function ProfileScreen() {
                 ) : (
                   <Text style={styles.saveButtonText}>Değişiklikleri Kaydet</Text>
                 )}
+              </TouchableOpacity>
+
+              {/* Logout Button */}
+              <TouchableOpacity style={styles.logoutButton} onPress={logout}>
+                <Ionicons name="log-out-outline" size={18} color="#ef4444" />
+                <Text style={styles.logoutButtonText}>Çıkış Yap</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -434,17 +504,18 @@ const styles = StyleSheet.create({
   tabsContainer: {
     borderBottomWidth: 1,
     borderBottomColor: '#e5e5e5',
+    maxHeight: 40,
   },
   tabs: {
     flexDirection: 'row',
-    paddingHorizontal: 20,
+    paddingHorizontal: 12,
   },
   tab: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    gap: 6,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    gap: 3,
     borderBottomWidth: 2,
     borderBottomColor: 'transparent',
   },
@@ -452,7 +523,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#FF7A00',
   },
   tabText: {
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: '500',
     color: '#666',
   },
@@ -611,15 +682,30 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 16,
+    padding: 14,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#ef4444',
     gap: 8,
+    marginTop: 12,
   },
   logoutButtonText: {
     color: '#ef4444',
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
+  },
+  backendWarning: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+    padding: 8,
+    backgroundColor: '#FFF7F0',
+    borderRadius: 8,
+    gap: 6,
+  },
+  backendWarningText: {
+    fontSize: 11,
+    color: '#FF7A00',
+    flex: 1,
   },
 })

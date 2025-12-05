@@ -10,6 +10,7 @@ import {
   Alert,
   Modal,
 } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useRoute, useNavigation } from '@react-navigation/native'
 import { useAuth } from '../contexts/AuthContext'
 import { forumAPI } from '../services/api'
@@ -17,6 +18,7 @@ import { forumAPI } from '../services/api'
 export default function ForumDetailScreen() {
   const route = useRoute()
   const navigation = useNavigation()
+  const insets = useSafeAreaInsets()
   const { user, backendUser } = useAuth()
   const forumId = (route.params as any)?.id
 
@@ -186,7 +188,11 @@ export default function ForumDetailScreen() {
 
   return (
     <View style={styles.container}>
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        style={styles.scrollView} 
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingTop: Math.max(insets.top, 0) }}
+      >
         {/* Topic Header */}
         <View style={styles.topicContainer}>
           <Text style={styles.topicTitle}>{topic.title}</Text>

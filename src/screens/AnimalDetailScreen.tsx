@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, ActivityIndicator, Share, Linking, Alert } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useRoute, useNavigation } from '@react-navigation/native'
 import { useAnimal } from '../hooks/useAnimals'
 import { useAuth } from '../contexts/AuthContext'
@@ -10,6 +11,7 @@ import { favoritesAPI, animalsAPIExtended } from '../services/api'
 export default function AnimalDetailScreen() {
   const route = useRoute()
   const navigation = useNavigation()
+  const insets = useSafeAreaInsets()
   const { id } = route.params as { id: number }
   const { animal, loading, error } = useAnimal(id)
   const { user, backendUser } = useAuth()
@@ -218,7 +220,10 @@ export default function AnimalDetailScreen() {
     : 'https://via.placeholder.com/800x450'
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView 
+      style={styles.container}
+      contentContainerStyle={{ paddingTop: Math.max(insets.top, 0) }}
+    >
       {/* Images */}
       <View style={styles.imageSection}>
         <Image source={{ uri: mainImage }} style={styles.mainImage} resizeMode="cover" />

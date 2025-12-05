@@ -18,7 +18,9 @@
               "catpet"
             ]
           }
-        ]
+        ],
+        "NSLocalNetworkUsageDescription": "CatPet uygulaması yerel ağdaki backend sunucusuna bağlanmak için ağ erişimine ihtiyaç duyar.",
+        "NSBonjourServices": ["_http._tcp"]
       }
     },
     "android": {

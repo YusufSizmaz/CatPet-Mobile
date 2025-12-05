@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react'
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Modal } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useAnimals } from '../hooks/useAnimals'
 import AnimalCard from '../components/AnimalCard'
 import AnimalFilters from '../components/AnimalFilters'
@@ -16,6 +17,7 @@ export default function AnimalsScreen() {
   const [filters, setFilters] = useState<AnimalFiltersType>({})
   const [sortBy, setSortBy] = useState<string>('newest')
   const [showFilters, setShowFilters] = useState(false)
+  const insets = useSafeAreaInsets()
   const { user } = useAuth()
   const [favoriteIds, setFavoriteIds] = useState<number[]>([])
 
@@ -123,7 +125,7 @@ export default function AnimalsScreen() {
   return (
     <View style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: Math.max(insets.top, 20) }]}>
         <View style={styles.headerContent}>
           <Text style={styles.title}>Sıcak Bir Yuva Arayan Dostlarımız</Text>
           <Text style={styles.subtitle}>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, ActivityIndicator, Modal, TextInput, Alert } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
 import { useBlog } from '../hooks/useBlog'
 import { BlogPost } from '../types/blog.types'
@@ -43,6 +44,7 @@ export default function BlogScreen() {
   const [activeTab, setActiveTab] = useState<'blog' | 'forum'>('blog')
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const navigation = useNavigation()
+  const insets = useSafeAreaInsets()
   const { user, backendUser } = useAuth()
   const { posts, loading, error } = useBlog(selectedCategory === 'all' ? undefined : { category: selectedCategory })
   
@@ -112,7 +114,7 @@ export default function BlogScreen() {
   return (
     <View style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: Math.max(insets.top, 20) }]}>
         <Text style={styles.title}>CatPet Bilgi Bankası & Forum</Text>
         <Text style={styles.subtitle}>
           Tüm hayvan dostlarımız hakkında bilgi edinin, topluluk forumumuzda sorular sorun ve deneyimlerinizi paylaşın.
