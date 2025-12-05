@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react'
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, ActivityIndicator, Modal } from 'react-native'
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, ActivityIndicator, Modal, Dimensions } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useAuth } from '../contexts/AuthContext'
 import { useNavigation } from '@react-navigation/native'
@@ -7,6 +7,19 @@ import { useAnimals } from '../hooks/useAnimals'
 import AnimalCard from '../components/AnimalCard'
 import { ANIMAL_TYPE_LABELS } from '../utils/constants'
 import { Ionicons } from '@expo/vector-icons'
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window')
+
+// Responsive helper functions
+const getResponsiveSize = (size: number) => {
+  const scale = SCREEN_WIDTH / 375
+  return Math.round(size * scale)
+}
+
+const getResponsivePadding = (padding: number) => {
+  const scale = SCREEN_WIDTH / 375
+  return Math.max(6, Math.round(padding * scale))
+}
 
 export default function LostAnimalScreen() {
   const { user, loading: authLoading } = useAuth()
@@ -87,36 +100,12 @@ export default function LostAnimalScreen() {
             style={styles.createButton}
             onPress={() => setShowCreateModal(true)}
           >
-            <Ionicons name="add-circle-outline" size={20} color="#fff" />
+            <Ionicons name="add-circle-outline" size={getResponsiveSize(18)} color="#fff" />
             <Text style={styles.createButtonText}>Yeni İlan Oluştur</Text>
           </TouchableOpacity>
         )}
       </View>
 
-      {/* Filters */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filtersContainer}>
-        <View style={styles.filters}>
-          <TouchableOpacity
-            style={[styles.filterButton, selectedType === '' && styles.filterButtonActive]}
-            onPress={() => setSelectedType('')}
-          >
-            <Text style={[styles.filterButtonText, selectedType === '' && styles.filterButtonTextActive]}>
-              Tümü
-            </Text>
-          </TouchableOpacity>
-          {['cat', 'dog', 'bird', 'other'].map((type) => (
-            <TouchableOpacity
-              key={type}
-              style={[styles.filterButton, selectedType === type && styles.filterButtonActive]}
-              onPress={() => setSelectedType(type)}
-            >
-              <Text style={[styles.filterButtonText, selectedType === type && styles.filterButtonTextActive]}>
-                {ANIMAL_TYPE_LABELS[type] || type}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </ScrollView>
 
       {/* Content */}
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -328,7 +317,7 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
   },
   headerContent: {
-    marginBottom: 16,
+    marginBottom: getResponsivePadding(4),
   },
   title: {
     fontSize: 24,
@@ -348,44 +337,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#FF7A00',
-    padding: 12,
-    borderRadius: 8,
-    gap: 8,
+    paddingVertical: getResponsivePadding(10),
+    paddingHorizontal: getResponsivePadding(14),
+    borderRadius: getResponsiveSize(8),
+    gap: getResponsivePadding(6),
   },
   createButtonText: {
     color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  filtersContainer: {
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e5e5',
-  },
-  filters: {
-    flexDirection: 'row',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    gap: 8,
-  },
-  filterButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: '#f9f9f9',
-    borderWidth: 1,
-    borderColor: '#e5e5e5',
-  },
-  filterButtonActive: {
-    backgroundColor: '#FFF7F0',
-    borderColor: '#FF7A00',
-  },
-  filterButtonText: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: '#666',
-  },
-  filterButtonTextActive: {
-    color: '#FF7A00',
+    fontSize: getResponsiveSize(13),
     fontWeight: '600',
   },
   content: {
@@ -406,15 +365,15 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   retryButton: {
-    marginTop: 16,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 8,
+    marginTop: getResponsivePadding(12),
+    paddingHorizontal: getResponsivePadding(16),
+    paddingVertical: getResponsivePadding(8),
+    borderRadius: getResponsiveSize(8),
     backgroundColor: '#FF7A00',
   },
   retryButtonText: {
     color: '#fff',
-    fontSize: 14,
+    fontSize: getResponsiveSize(13),
     fontWeight: '600',
   },
   emptyText: {
@@ -480,11 +439,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
-    marginBottom: 16,
+    marginBottom: 12,
   },
   typeButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#ddd',
@@ -495,7 +454,7 @@ const styles = StyleSheet.create({
     borderColor: '#FF7A00',
   },
   typeButtonText: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#666',
   },
   typeButtonTextActive: {
@@ -517,14 +476,15 @@ const styles = StyleSheet.create({
   },
   submitButton: {
     backgroundColor: '#FF7A00',
-    padding: 16,
-    borderRadius: 12,
+    paddingVertical: getResponsivePadding(12),
+    paddingHorizontal: getResponsivePadding(16),
+    borderRadius: getResponsiveSize(10),
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: getResponsivePadding(8),
   },
   submitButtonText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: getResponsiveSize(14),
     fontWeight: '600',
   },
   errorText: {

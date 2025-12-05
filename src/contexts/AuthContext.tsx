@@ -8,7 +8,7 @@ import {
   updateProfile,
 } from 'firebase/auth'
 import { auth } from '../services/firebase'
-import { authAPI } from '../services/api'
+import { authAPI, usersAPI } from '../services/api'
 import { signInWithGoogle } from '../services/googleAuth'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { User } from '../types/user.types'
@@ -132,8 +132,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const refreshBackendUser = async () => {
-    if (user) {
-      await syncUserWithBackend(user)
+    if (user && backendUser?.id) {
+      console.log('🔄 Backend kullanıcı bilgileri yenileniyor...')
+      try {
+        const idToken = await user.getIdToken()
+        // Doğrudan usersAPI.getById ile güncel veriyi çek (token ile)
+        const updatedUserData = await usersAPI.getById(backendUser.id, idToken)
+        console.log('✅ Güncel kullanıcı verisi alındı:', {
+          id: updatedUserData?.id,
+          firstName: updatedUserData?.firstName,
+          lastName: updatedUserData?.lastName,
+          city: updatedUserData?.city,
+          updatedAt: updatedUserData?.updatedAt,
+        })
+        setBackendUser(updatedUserData)
+        console.log('✅ Backend kullanıcı bilgileri başarıyla yenilendi ve state güncellendi')
+      } catch (error: any) {
+        console.error('❌ Backend kullanıcı bilgileri yenilenirken hata:', error.message)
+        console.error('❌ Hata detayları:', {
+          response: error.response?.data,
+          status: error.response?.status,
+        })
+        // Hata durumunda fallback olarak syncUserWithBackend kullan
+        try {
+          console.log('🔄 Fallback: syncUserWithBackend kullanılıyor...')
+          await syncUserWithBackend(user)
+          console.log('✅ Fallback sync başarılı')
+        } catch (fallbackError: any) {
+          console.error('❌ Fallback sync de başarısız:', fallbackError.message)
+        }
+      }
+    } else if (user) {
+      // Eğer backendUser yoksa, syncUserWithBackend kullan
+      console.log('🔄 Backend kullanıcı bilgileri senkronize ediliyor (ilk kez)...')
+      try {
+        await syncUserWithBackend(user)
+        console.log('✅ Backend kullanıcı bilgileri başarıyla senkronize edildi')
+      } catch (error: any) {
+        console.error('❌ Backend kullanıcı bilgileri senkronize edilirken hata:', error.message)
+      }
     }
   }
 

@@ -180,20 +180,44 @@ export const authAPI = {
 export const usersAPI = {
   getAll: () => fetchAPI<any[]>('/users', { method: 'GET' }),
   
-  getById: (id: number) => fetchAPI<any>(`/users/${id}`, { method: 'GET' }),
+  getById: (id: number, token?: string) => fetchAPI<any>(`/users/${id}`, {
+    method: 'GET',
+    headers: token ? {
+      'Authorization': `Bearer ${token}`,
+    } : undefined,
+  }),
   
   create: (data: any) => fetchAPI<any>('/users', {
     method: 'POST',
     data,
   }),
   
-  update: (id: number, data: any, token?: string) => fetchAPI<any>(`/users/${id}`, {
-    method: 'PUT',
-    data,
-    headers: token ? {
-      'Authorization': `Bearer ${token}`,
-    } : undefined,
-  }),
+  update: async (id: number, data: any, token?: string) => {
+    console.log('📤 [usersAPI.update] İstek gönderiliyor:', {
+      endpoint: `/users/${id}`,
+      method: 'PUT',
+      data,
+      hasToken: !!token,
+    })
+    try {
+      const result = await fetchAPI<any>(`/users/${id}`, {
+        method: 'PUT',
+        data,
+        headers: token ? {
+          'Authorization': `Bearer ${token}`,
+        } : undefined,
+      })
+      console.log('✅ [usersAPI.update] Başarılı yanıt:', result)
+      return result
+    } catch (error: any) {
+      console.error('❌ [usersAPI.update] Hata:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+      })
+      throw error
+    }
+  },
 }
 
 // User Settings API

@@ -196,6 +196,10 @@ export default function AppNavigator() {
     <NavigationContainer>
       <Stack.Navigator
         initialRouteName={showWelcome ? 'Welcome' : 'Main'}
+        screenOptions={{
+          headerBackTitle: 'Geri',
+          headerBackTitleVisible: true,
+        }}
       >
         {user ? (
           <>
@@ -268,6 +272,7 @@ export default function AppNavigator() {
               component={LostAnimalScreen}
               options={{
                 title: 'Kayıp İlanı',
+                headerBackTitle: 'Bir önceki sayfa',
                 headerStyle: {
                   backgroundColor: '#fff',
                   borderBottomWidth: 2,

@@ -241,7 +241,21 @@ export default function ProfileScreen() {
     setLoading(true)
     try {
       const idToken = await user.getIdToken()
-      await usersAPI.update(backendUser.id, {
+      
+      // API isteğini yap ve response'u kontrol et
+      console.log('📤 Profil güncelleme isteği gönderiliyor:', {
+        userId: backendUser.id,
+        data: {
+          firstName: formData.firstName || null,
+          lastName: formData.lastName || null,
+          description: formData.description || null,
+          city: formData.city || null,
+          phone: formData.phone || null,
+          nickname: formData.nickname || null,
+        }
+      })
+      
+      const updateResult = await usersAPI.update(backendUser.id, {
         firstName: formData.firstName || null,
         lastName: formData.lastName || null,
         description: formData.description || null,
@@ -249,6 +263,10 @@ export default function ProfileScreen() {
         phone: formData.phone || null,
         nickname: formData.nickname || null,
       }, idToken)
+      
+      console.log('✅ Profil güncelleme API yanıtı:', updateResult)
+      
+      // Backend'den güncel veriyi çek
       await refreshBackendUser()
       
       // Başarılı kayıt sonrası initialFormData'yı güncelle
@@ -261,7 +279,12 @@ export default function ProfileScreen() {
         type: 'success',
       })
     } catch (error: any) {
-      console.error('Profile save error:', error)
+      console.error('❌ Profil kaydetme hatası:', error)
+      console.error('❌ Hata detayları:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+      })
       setSuccessDialog({
         visible: true,
         title: 'Hata',
