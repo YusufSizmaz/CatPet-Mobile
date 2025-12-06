@@ -1,5 +1,6 @@
 import * as AuthSession from 'expo-auth-session'
 import * as WebBrowser from 'expo-web-browser'
+import * as Crypto from 'expo-crypto'
 import { GoogleAuthProvider, signInWithCredential, UserCredential } from 'firebase/auth'
 import Constants from 'expo-constants'
 import { auth } from './firebase'
@@ -7,24 +8,15 @@ import { auth } from './firebase'
 // Complete the auth session in the browser
 WebBrowser.maybeCompleteAuthSession()
 
-// Google OAuth configuration
-const discovery = {
-  authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
-  tokenEndpoint: 'https://oauth2.googleapis.com/token',
-  revocationEndpoint: 'https://oauth2.googleapis.com/revoke',
-}
-
 // Get Google OAuth Client ID from environment
-// For React Native, we need to use the iOS/Android client ID from Firebase Console
-// This should be configured in Firebase Console > Authentication > Sign-in method > Google
+// Expo'da web browser kullanıldığı için Web Client ID kullanmalıyız
 const getGoogleClientId = () => {
-  // Try to get from environment variables
+  // Web Client ID kullan (Expo web browser için gerekli)
   const clientId = Constants.expoConfig?.extra?.googleClientId || 
                    process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID
   
   if (!clientId) {
-    // Fallback: Use the web client ID (will work for development)
-    // In production, you should configure separate iOS/Android client IDs
+    // Fallback: Use the web client ID
     return '256950851198-bdcb5ed2f6a74ae7602a2f.apps.googleusercontent.com'
   }
   
@@ -35,29 +27,40 @@ export async function signInWithGoogle(): Promise<UserCredential | null> {
   try {
     const clientId = getGoogleClientId()
     
-    // Expo'nun makeRedirectUri fonksiyonunu kullan - otomatik olarak doğru URL'i oluşturur
-    // Development'ta Expo proxy kullanır, production'da custom scheme kullanır
-    const redirectUri = AuthSession.makeRedirectUri({
-      scheme: 'catpet',
-      path: 'auth',
-    })
+    // Firebase'in auth handler URL'ini kullan - zaten Google Cloud Console'da kayıtlı
+    // Bu URL web browser tabanlı OAuth için çalışır
+    const redirectUri = 'https://catpetapp.firebaseapp.com/__/auth/handler'
     
     if (__DEV__) {
       console.log('🔗 Google OAuth Redirect URI:', redirectUri)
       console.log('🔑 Google Client ID:', clientId?.substring(0, 20) + '...')
-      console.log('⚠️  NOT: Bu redirect URI\'yi Google Cloud Console\'da eklemeniz gerekiyor!')
-      console.log('   1. Google Cloud Console > APIs & Services > Credentials')
-      console.log('   2. OAuth 2.0 Client ID\'nizi seçin')
-      console.log('   3. "Authorized redirect URIs" bölümüne şu URL\'i ekleyin:')
-      console.log('      ', redirectUri)
+      console.log('✅ Firebase auth handler kullanılıyor (Google Cloud Console\'da kayıtlı)')
     }
     
+    // Google OAuth discovery endpoints
+    const discovery = {
+      authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
+      tokenEndpoint: 'https://oauth2.googleapis.com/token',
+      revocationEndpoint: 'https://oauth2.googleapis.com/revoke',
+    }
+    
+    // IdToken için nonce gereklidir - güvenlik için random nonce oluştur
+    const nonce = await Crypto.digestStringAsync(
+      Crypto.CryptoDigestAlgorithm.SHA256,
+      Math.random().toString(36) + Date.now().toString()
+    )
+    
     // Request for Google OAuth
+    // IdToken için nonce gereklidir
     const request = new AuthSession.AuthRequest({
       clientId: clientId,
       scopes: ['openid', 'profile', 'email'],
       responseType: AuthSession.ResponseType.IdToken,
       redirectUri: redirectUri,
+      usePKCE: false, // IdToken için PKCE gerekli değil
+      extraParams: {
+        nonce: nonce, // IdToken için nonce ekle
+      },
     })
 
     const result = await request.promptAsync(discovery)
