@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, ActivityIndicator, Modal, TextInput, Alert } from 'react-native'
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, ActivityIndicator, Modal, TextInput, Alert, Dimensions } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
 import { useBlog } from '../hooks/useBlog'
@@ -7,7 +7,20 @@ import { BlogPost } from '../types/blog.types'
 import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '../contexts/AuthContext'
 import { forumAPI } from '../services/api'
-import { getProfilePhotoUrl, hasProfilePhoto } from '../utils/profilePhoto'
+import { getProfilePhotoUrl } from '../utils/profilePhoto'
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window')
+
+// Responsive helper functions
+const getResponsiveSize = (size: number) => {
+  const scale = SCREEN_WIDTH / 375
+  return Math.round(size * scale)
+}
+
+const getResponsivePadding = (padding: number) => {
+  const scale = SCREEN_WIDTH / 375
+  return Math.max(8, Math.round(padding * scale))
+}
 
 const categories = ['all', 'cats', 'dogs', 'birds', 'fish', 'rodents', 'other']
 const categoryLabels: Record<string, string> = {
@@ -181,41 +194,65 @@ export default function BlogScreen() {
           ) : (
             <>
               {/* Featured Post */}
-              {featuredPost && (
-                <TouchableOpacity
-                  style={styles.featuredCard}
-                  onPress={() => navigation.navigate('BlogDetail' as never, { id: featuredPost.id } as never)}
-                >
-                  {featuredPost.coverImage && (
-                    <Image source={{ uri: featuredPost.coverImage }} style={styles.featuredImage} />
-                  )}
-                  <View style={styles.featuredContent}>
-                    <View style={styles.featuredBadge}>
-                      <Text style={styles.featuredBadgeText}>Öne Çıkan Yazı</Text>
-                    </View>
-                    <Text style={styles.featuredTitle}>{featuredPost.title}</Text>
-                    <Text style={styles.featuredExcerpt} numberOfLines={3}>
-                      {featuredPost.excerpt || featuredPost.content?.substring(0, 200) || ''}
-                    </Text>
-                    <View style={styles.featuredFooter}>
-                      <View style={styles.authorInfo}>
-                        {featuredPost.authorPhoto ? (
-                          <Image
-                            source={{ uri: featuredPost.authorPhoto }}
-                            style={styles.authorPhoto}
-                          />
-                        ) : (
-                          <View style={styles.authorPlaceholder}>
-                            <Ionicons name="person-outline" size={16} color="#999" />
-                          </View>
-                        )}
-                        <Text style={styles.authorName}>{featuredPost.author || 'CatPet'}</Text>
+              {featuredPost && (() => {
+                // Get author photo URL for featured post
+                // Always use getProfilePhotoUrl to respect user's showGooglePhoto setting
+                const getFeaturedAuthorPhotoUrl = () => {
+                  // If author is an object, use getProfilePhotoUrl to check showGooglePhoto setting
+                  if (featuredPost.author && typeof featuredPost.author === 'object') {
+                    return getProfilePhotoUrl(featuredPost.author)
+                  }
+                  // If authorPhoto is provided but author object is not available, use it
+                  // (This might happen if backend doesn't send full author object)
+                  if (featuredPost.authorPhoto) {
+                    return featuredPost.authorPhoto
+                  }
+                  // Default avatar if nothing is available
+                  return getProfilePhotoUrl(null)
+                }
+                
+                const featuredAuthorPhotoUrl = getFeaturedAuthorPhotoUrl()
+                const featuredAuthorName = typeof featuredPost.author === 'string' ? featuredPost.author : 
+                  (featuredPost.author && typeof featuredPost.author === 'object' ? 
+                    `${featuredPost.author.firstName || ''} ${featuredPost.author.lastName || ''}`.trim() || 'CatPet' : 
+                    'CatPet')
+                
+                return (
+                  <TouchableOpacity
+                    style={styles.featuredCard}
+                    onPress={() => navigation.navigate('BlogDetail' as never, { id: featuredPost.id } as never)}
+                  >
+                    {featuredPost.coverImage && (
+                      <Image source={{ uri: featuredPost.coverImage }} style={styles.featuredImage} />
+                    )}
+                    <View style={styles.featuredContent}>
+                      <View style={styles.featuredBadge}>
+                        <Text style={styles.featuredBadgeText}>Öne Çıkan Yazı</Text>
                       </View>
-                      <Text style={styles.featuredDate}>4 dk okuma</Text>
+                      <Text style={styles.featuredTitle}>{featuredPost.title}</Text>
+                      <Text style={styles.featuredExcerpt} numberOfLines={3}>
+                        {featuredPost.excerpt || featuredPost.content?.substring(0, 200) || ''}
+                      </Text>
+                      <View style={styles.featuredFooter}>
+                        <View style={styles.authorInfo}>
+                          {featuredAuthorPhotoUrl ? (
+                            <Image
+                              source={{ uri: featuredAuthorPhotoUrl }}
+                              style={styles.authorPhoto}
+                            />
+                          ) : (
+                            <View style={styles.authorPlaceholder}>
+                              <Ionicons name="person-outline" size={16} color="#999" />
+                            </View>
+                          )}
+                          <Text style={styles.authorName}>{featuredAuthorName}</Text>
+                        </View>
+                        <Text style={styles.featuredDate}>4 dk okuma</Text>
+                      </View>
                     </View>
-                  </View>
-                </TouchableOpacity>
-              )}
+                  </TouchableOpacity>
+                )
+              })()}
 
               {/* Regular Posts */}
               <View style={styles.postsGrid}>
@@ -281,16 +318,10 @@ export default function BlogScreen() {
                       onPress={() => navigation.navigate('ForumDetail' as never, { id: topic.id } as never)}
                     >
                       <View style={styles.forumAvatar}>
-                        {hasProfilePhoto(topic.createdUser) ? (
-                          <Image
-                            source={{ uri: getProfilePhotoUrl(topic.createdUser) }}
-                            style={styles.forumAvatarImage}
-                          />
-                        ) : (
-                          <Text style={styles.forumAvatarText}>
-                            {isLoggedIn ? (topic.createdUser?.firstName || 'K')[0].toUpperCase() : '?'}
-                          </Text>
-                        )}
+                        <Image
+                          source={{ uri: getProfilePhotoUrl(topic.createdUser) }}
+                          style={styles.forumAvatarImage}
+                        />
                       </View>
                       <View style={styles.forumContent}>
                         <Text style={styles.forumItemTitle}>{topic.title}</Text>
@@ -334,56 +365,83 @@ export default function BlogScreen() {
           setForumError(null)
         }}
       >
-        <View style={styles.modalContainer}>
+        <View style={[styles.modalContainer, { paddingTop: Math.max(insets.top, 0) }]}>
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Yeni Forum Konusu</Text>
             <TouchableOpacity
+              style={styles.modalCloseButton}
               onPress={() => {
                 setShowNewTopicModal(false)
                 setNewTopicTitle('')
                 setNewTopicContent('')
                 setForumError(null)
               }}
+              activeOpacity={0.7}
             >
-              <Ionicons name="close" size={24} color="#666" />
+              <Ionicons name="close" size={getResponsiveSize(22)} color="#666" />
             </TouchableOpacity>
           </View>
-          <ScrollView style={styles.modalContent}>
+          <ScrollView 
+            style={styles.modalContent}
+            contentContainerStyle={styles.modalContentContainer}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
             {forumError && (
               <View style={styles.errorContainer}>
+                <Ionicons name="alert-circle" size={getResponsiveSize(18)} color="#ef4444" />
                 <Text style={styles.errorText}>{forumError}</Text>
               </View>
             )}
             <View style={styles.formGroup}>
-              <Text style={styles.formLabel}>Başlık *</Text>
-              <TextInput
-                style={styles.formInput}
-                value={newTopicTitle}
-                onChangeText={setNewTopicTitle}
-                placeholder="Konu başlığını girin"
-              />
+              <View style={styles.labelContainer}>
+                <Ionicons name="create-outline" size={getResponsiveSize(18)} color="#FF7A00" />
+                <Text style={styles.formLabel}>Başlık *</Text>
+              </View>
+              <View style={styles.inputWrapper}>
+                <TextInput
+                  style={styles.formInput}
+                  value={newTopicTitle}
+                  onChangeText={setNewTopicTitle}
+                  placeholder="Konu başlığını girin"
+                  placeholderTextColor="#999"
+                  maxLength={100}
+                />
+                <Text style={styles.charCount}>{newTopicTitle.length}/100</Text>
+              </View>
             </View>
             <View style={styles.formGroup}>
-              <Text style={styles.formLabel}>İçerik *</Text>
-              <TextInput
-                style={[styles.formInput, styles.formTextArea]}
-                value={newTopicContent}
-                onChangeText={setNewTopicContent}
-                placeholder="Konu içeriğini girin"
-                multiline
-                numberOfLines={8}
-                textAlignVertical="top"
-              />
+              <View style={styles.labelContainer}>
+                <Ionicons name="document-text-outline" size={getResponsiveSize(18)} color="#FF7A00" />
+                <Text style={styles.formLabel}>İçerik *</Text>
+              </View>
+              <View style={styles.inputWrapper}>
+                <TextInput
+                  style={[styles.formInput, styles.formTextArea]}
+                  value={newTopicContent}
+                  onChangeText={setNewTopicContent}
+                  placeholder="Konu içeriğini detaylı bir şekilde açıklayın..."
+                  placeholderTextColor="#999"
+                  multiline
+                  textAlignVertical="top"
+                  maxLength={2000}
+                />
+                <Text style={styles.charCount}>{newTopicContent.length}/2000</Text>
+              </View>
             </View>
             <TouchableOpacity
               style={[styles.submitTopicButton, (!newTopicTitle.trim() || !newTopicContent.trim() || submittingTopic) && styles.submitTopicButtonDisabled]}
               onPress={handleCreateTopic}
               disabled={!newTopicTitle.trim() || !newTopicContent.trim() || submittingTopic}
+              activeOpacity={0.8}
             >
               {submittingTopic ? (
                 <ActivityIndicator color="#fff" />
               ) : (
-                <Text style={styles.submitTopicButtonText}>Konu Oluştur</Text>
+                <>
+                  <Ionicons name="checkmark-circle" size={getResponsiveSize(20)} color="#fff" />
+                  <Text style={styles.submitTopicButtonText}>Konu Oluştur</Text>
+                </>
               )}
             </TouchableOpacity>
           </ScrollView>
@@ -395,6 +453,30 @@ export default function BlogScreen() {
 
 function BlogCard({ post }: { post: BlogPost }) {
   const navigation = useNavigation()
+  
+  // Get author photo URL
+  // Always use getProfilePhotoUrl to respect user's showGooglePhoto setting
+  const getAuthorPhotoUrl = () => {
+    // If author is an object, use getProfilePhotoUrl to check showGooglePhoto setting
+    if (post.author && typeof post.author === 'object') {
+      return getProfilePhotoUrl(post.author)
+    }
+    
+    // If authorPhoto is provided but author object is not available, use it
+    // (This might happen if backend doesn't send full author object)
+    if (post.authorPhoto) {
+      return post.authorPhoto
+    }
+    
+    // Default avatar if nothing is available
+    return getProfilePhotoUrl(null)
+  }
+  
+  const authorPhotoUrl = getAuthorPhotoUrl()
+  const authorName = typeof post.author === 'string' ? post.author : 
+    (post.author && typeof post.author === 'object' ? 
+      `${post.author.firstName || ''} ${post.author.lastName || ''}`.trim() || 'CatPet' : 
+      'CatPet')
 
   return (
     <TouchableOpacity
@@ -413,7 +495,19 @@ function BlogCard({ post }: { post: BlogPost }) {
           {post.excerpt || post.content?.substring(0, 150) || ''}
         </Text>
         <View style={styles.blogCardFooter}>
-          <Text style={styles.blogCardAuthor}>{post.author || 'CatPet'}</Text>
+          <View style={styles.blogCardAuthorInfo}>
+            {authorPhotoUrl ? (
+              <Image
+                source={{ uri: authorPhotoUrl }}
+                style={styles.blogCardAuthorPhoto}
+              />
+            ) : (
+              <View style={styles.blogCardAuthorPlaceholder}>
+                <Ionicons name="person-outline" size={14} color="#999" />
+              </View>
+            )}
+            <Text style={styles.blogCardAuthor}>{authorName}</Text>
+          </View>
           <Text style={styles.blogCardSeparator}>·</Text>
           <Text style={styles.blogCardReadTime}>4 dk okuma</Text>
         </View>
@@ -632,6 +726,25 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#e5e5e5',
   },
+  blogCardAuthorInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  blogCardAuthorPhoto: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#e5e5e5',
+  },
+  blogCardAuthorPlaceholder: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#e5e5e5',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   blogCardAuthor: {
     fontSize: 12,
     color: '#666',
@@ -726,11 +839,6 @@ const styles = StyleSheet.create({
     height: '100%',
     borderRadius: 24,
   },
-  forumAvatarText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
   forumBlogLink: {
     fontSize: 12,
     color: '#FF7A00',
@@ -739,9 +847,14 @@ const styles = StyleSheet.create({
   },
   errorContainer: {
     backgroundColor: '#FEE2E2',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 16,
+    padding: getResponsivePadding(12),
+    borderRadius: 10,
+    marginBottom: getResponsivePadding(16),
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: getResponsivePadding(8),
+    borderWidth: 1,
+    borderColor: '#FECACA',
   },
   loadingText: {
     marginTop: 12,
@@ -764,40 +877,99 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: getResponsivePadding(20),
+    paddingVertical: getResponsivePadding(16),
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+    backgroundColor: '#fff',
+  },
+  modalTitle: {
+    fontSize: getResponsiveSize(20),
+    fontWeight: '700',
+    color: '#1a1a1a',
+  },
+  modalCloseButton: {
+    width: getResponsiveSize(32),
+    height: getResponsiveSize(32),
+    borderRadius: getResponsiveSize(16),
+    backgroundColor: '#f9f9f9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalContent: {
+    flex: 1,
+  },
+  modalContentContainer: {
+    padding: getResponsivePadding(20),
+    paddingBottom: getResponsivePadding(40),
+  },
   formGroup: {
-    marginBottom: 20,
+    marginBottom: getResponsivePadding(20),
+  },
+  labelContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: getResponsivePadding(8),
+    marginBottom: getResponsivePadding(10),
   },
   formLabel: {
-    fontSize: 14,
+    fontSize: getResponsiveSize(15),
     fontWeight: '600',
-    color: '#333',
-    marginBottom: 8,
+    color: '#1a1a1a',
+  },
+  inputWrapper: {
+    position: 'relative',
   },
   formInput: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 14,
-    backgroundColor: '#f9f9f9',
+    borderWidth: 2,
+    borderColor: '#e5e7eb',
+    borderRadius: 12,
+    padding: getResponsivePadding(14),
+    fontSize: getResponsiveSize(15),
+    backgroundColor: '#fff',
+    color: '#1a1a1a',
+    minHeight: getResponsiveSize(48),
   },
   formTextArea: {
-    height: 150,
-    textAlignVertical: 'top',
+    minHeight: getResponsiveSize(180),
+    paddingTop: getResponsivePadding(14),
+    paddingBottom: getResponsivePadding(30),
+  },
+  charCount: {
+    position: 'absolute',
+    bottom: getResponsivePadding(8),
+    right: getResponsivePadding(12),
+    fontSize: getResponsiveSize(11),
+    color: '#9ca3af',
   },
   submitTopicButton: {
     backgroundColor: '#FF7A00',
-    padding: 16,
-    borderRadius: 8,
+    paddingVertical: getResponsivePadding(16),
+    paddingHorizontal: getResponsivePadding(20),
+    borderRadius: 12,
     alignItems: 'center',
-    marginTop: 8,
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: getResponsivePadding(8),
+    marginTop: getResponsivePadding(8),
+    shadowColor: '#FF7A00',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
   },
   submitTopicButtonDisabled: {
     opacity: 0.5,
+    shadowOpacity: 0,
+    elevation: 0,
   },
   submitTopicButtonText: {
     color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: getResponsiveSize(16),
+    fontWeight: '700',
   },
 })

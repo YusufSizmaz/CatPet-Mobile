@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { View, ActivityIndicator, StyleSheet, TouchableOpacity, Text } from 'react-native'
 import { NavigationContainer } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
@@ -60,6 +60,8 @@ function MainTabs() {
             iconName = focused ? 'heart' : 'heart-outline'
           } else if (route.name === 'FoodPoints') {
             iconName = focused ? 'location' : 'location-outline'
+          } else if (route.name === 'LostAnimals') {
+            iconName = focused ? 'search' : 'search-outline'
           } else if (route.name === 'Blog') {
             iconName = focused ? 'library' : 'library-outline'
           } else if (route.name === 'Profile') {
@@ -99,6 +101,11 @@ function MainTabs() {
         options={{ title: 'Mama Bırak' }}
       />
       <Tab.Screen 
+        name="LostAnimals" 
+        component={LostAnimalScreen}
+        options={{ title: 'Kayıp Hayvanlar' }}
+      />
+      <Tab.Screen 
         name="Blog" 
         component={BlogScreen}
         options={{ title: 'Bilgi Bankası' }}
@@ -117,6 +124,7 @@ export default function AppNavigator() {
   const [isOnboardingCompleted, setIsOnboardingCompleted] = useState<boolean | null>(null)
   const [isCheckingOnboarding, setIsCheckingOnboarding] = useState(true)
   const [showWelcome, setShowWelcome] = useState<{ isNewUser: boolean; userName?: string } | null>(null)
+  const navigationRef = useRef<any>(null)
 
   useEffect(() => {
     console.log('🎉 showWelcome state changed:', showWelcome)
@@ -136,22 +144,34 @@ export default function AppNavigator() {
 
   const checkWelcomeScreen = async () => {
     try {
-      const welcomeData = await AsyncStorage.getItem('showWelcomeScreen')
-      console.log('🔍 Checking welcome screen flag:', welcomeData)
-      if (welcomeData) {
-        const parsed = JSON.parse(welcomeData)
-        console.log('✅ Welcome screen flag found, showing welcome:', parsed)
-        // Set state immediately
-        setShowWelcome(parsed)
-        // Remove flag after a small delay to ensure state is set
-        setTimeout(async () => {
-          await AsyncStorage.removeItem('showWelcomeScreen')
-          console.log('🗑️ Welcome screen flag removed')
-        }, 500)
-      } else {
-        console.log('❌ No welcome screen flag found')
-        setShowWelcome(null)
+      // Retry mechanism - flag set edilmesi biraz zaman alabilir
+      let retries = 0
+      const maxRetries = 5
+      
+      const checkFlag = async (): Promise<void> => {
+        const welcomeData = await AsyncStorage.getItem('showWelcomeScreen')
+        console.log(`🔍 Checking welcome screen flag (attempt ${retries + 1}):`, welcomeData)
+        
+        if (welcomeData) {
+          const parsed = JSON.parse(welcomeData)
+          console.log('✅ Welcome screen flag found, showing welcome:', parsed)
+          // Set state immediately
+          setShowWelcome(parsed)
+          // DON'T remove flag immediately - let WelcomeScreen handle it
+          // Flag will be removed when WelcomeScreen completes
+        } else if (retries < maxRetries) {
+          // Retry after a delay if flag not found yet
+          retries++
+          setTimeout(() => {
+            checkFlag()
+          }, 400)
+        } else {
+          console.log('❌ No welcome screen flag found after retries')
+          setShowWelcome(null)
+        }
       }
+      
+      await checkFlag()
     } catch (error) {
       console.error('Error checking welcome screen:', error)
       setShowWelcome(null)
@@ -165,14 +185,25 @@ export default function AppNavigator() {
   useEffect(() => {
     if (user) {
       // Delay to ensure AsyncStorage write is complete (increased delay for reliability)
+      // Register işlemi sırasında flag set ediliyor, bu yüzden daha uzun delay gerekiyor
       const timer = setTimeout(() => {
         checkWelcomeScreen()
-      }, 300)
+      }, 800)
       return () => clearTimeout(timer)
     } else {
       setShowWelcome(null)
     }
   }, [user])
+
+  // Navigate to Welcome screen when showWelcome changes
+  useEffect(() => {
+    if (showWelcome && user && navigationRef.current) {
+      console.log('🚀 Navigating to Welcome screen')
+      setTimeout(() => {
+        navigationRef.current?.navigate('Welcome')
+      }, 100)
+    }
+  }, [showWelcome, user])
 
   const handleOnboardingComplete = () => {
     setIsOnboardingCompleted(true)
@@ -200,10 +231,20 @@ export default function AppNavigator() {
   }
 
   return (
-    <NavigationContainer>
+    <NavigationContainer
+      ref={navigationRef}
+      onReady={() => {
+        // When navigation is ready, check if we should show welcome screen
+        if (showWelcome && user) {
+          setTimeout(() => {
+            navigationRef.current?.navigate('Welcome')
+          }, 100)
+        }
+      }}
+    >
       <Stack.Navigator
         key={showWelcome ? 'welcome' : 'main'}
-        initialRouteName={showWelcome ? 'Welcome' : 'Main'}
+        initialRouteName="Main"
         screenOptions={{
           headerBackTitle: 'Geri',
           headerBackTitleVisible: true,
@@ -211,36 +252,30 @@ export default function AppNavigator() {
       >
         {user ? (
           <>
-            {showWelcome ? (
-              <>
-                <Stack.Screen 
-                  name="Welcome" 
-                  options={{ headerShown: false }}
-                >
-                  {() => (
-                    <WelcomeScreen 
-                      isNewUser={showWelcome.isNewUser} 
-                      userName={showWelcome.userName}
-                      onComplete={() => {
-                        console.log('🎉 Welcome screen completed, hiding welcome')
-                        setShowWelcome(null)
-                      }}
-                    />
-                  )}
-                </Stack.Screen>
-                <Stack.Screen 
-                  name="Main" 
-                  component={MainTabs}
-                  options={{ headerShown: false }}
+            <Stack.Screen 
+              name="Main" 
+              component={MainTabs}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen 
+              name="Welcome" 
+              options={{ headerShown: false }}
+            >
+              {({ navigation }) => (
+                <WelcomeScreen 
+                  isNewUser={showWelcome?.isNewUser ?? false} 
+                  userName={showWelcome?.userName}
+                  onComplete={async () => {
+                    console.log('🎉 Welcome screen completed, hiding welcome')
+                    // Remove flag when welcome screen completes
+                    await AsyncStorage.removeItem('showWelcomeScreen')
+                    setShowWelcome(null)
+                    // Navigate to Main
+                    navigation.navigate('Main' as never)
+                  }}
                 />
-              </>
-            ) : (
-              <Stack.Screen 
-                name="Main" 
-                component={MainTabs}
-                options={{ headerShown: false }}
-              />
-            )}
+              )}
+            </Stack.Screen>
             <Stack.Screen 
               name="AnimalDetail" 
               component={AnimalDetailScreen}

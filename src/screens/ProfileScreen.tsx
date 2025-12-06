@@ -15,9 +15,12 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useAuth } from '../contexts/AuthContext'
 import { useNavigation } from '@react-navigation/native'
-import { usersAPI, userSettingsAPI } from '../services/api'
+import { usersAPI, userSettingsAPI, animalsAPIExtended, animalsAPI } from '../services/api'
 import { Ionicons } from '@expo/vector-icons'
 import SuccessDialog from '../components/SuccessDialog'
+import { getProfilePhotoUrl } from '../utils/profilePhoto'
+import AnimalCard from '../components/AnimalCard'
+import { Animal } from '../types/animal.types'
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window')
 
@@ -70,6 +73,8 @@ export default function ProfileScreen() {
     phone: '',
     nickname: '',
   })
+  const [myLostAnimals, setMyLostAnimals] = useState<Animal[]>([])
+  const [loadingLostAnimals, setLoadingLostAnimals] = useState(false)
 
   // Animations
   const fadeAnim = useRef(new Animated.Value(0)).current
@@ -201,6 +206,81 @@ export default function ProfileScreen() {
         useNickname: false,
       })
     }
+  }
+
+  const loadMyLostAnimals = async () => {
+    if (!user || !backendUser) {
+      setMyLostAnimals([])
+      return
+    }
+    try {
+      setLoadingLostAnimals(true)
+      const idToken = await user.getIdToken()
+      const animals = await animalsAPIExtended.findByOwnerId(backendUser.id, idToken)
+      setMyLostAnimals(animals || [])
+    } catch (error) {
+      console.error('Error loading my lost animals:', error)
+      setMyLostAnimals([])
+    } finally {
+      setLoadingLostAnimals(false)
+    }
+  }
+
+  const handleMarkAsFound = async (animalId: number) => {
+    if (!user) return
+    try {
+      const idToken = await user.getIdToken()
+      await animalsAPIExtended.updateStatus(animalId, false, idToken)
+      setSuccessDialog({
+        visible: true,
+        title: 'Başarılı',
+        message: 'Hayvanınız bulundu olarak işaretlendi. İlan pasif hale getirildi.',
+        type: 'success',
+      })
+      loadMyLostAnimals()
+    } catch (error: any) {
+      setSuccessDialog({
+        visible: true,
+        title: 'Hata',
+        message: error.message || 'İşlem sırasında bir hata oluştu.',
+        type: 'error',
+      })
+    }
+  }
+
+  const handleDeleteAnimal = async (animalId: number) => {
+    if (!user) return
+    Alert.alert(
+      'İlanı Sil',
+      'Bu ilanı silmek istediğinize emin misiniz?',
+      [
+        { text: 'İptal', style: 'cancel' },
+        {
+          text: 'Sil',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const idToken = await user.getIdToken()
+              await animalsAPI.delete(animalId)
+              setSuccessDialog({
+                visible: true,
+                title: 'Başarılı',
+                message: 'İlan başarıyla silindi.',
+                type: 'success',
+              })
+              loadMyLostAnimals()
+            } catch (error: any) {
+              setSuccessDialog({
+                visible: true,
+                title: 'Hata',
+                message: error.message || 'İlan silinirken bir hata oluştu.',
+                type: 'error',
+              })
+            }
+          },
+        },
+      ]
+    )
   }
 
   const hasChanges = () => {
@@ -348,31 +428,33 @@ export default function ProfileScreen() {
     return 'Kullanıcı'
   }
 
-  const getProfilePhotoUrl = () => {
-    const defaultAvatar = 'https://res.cloudinary.com/dknfc65z0/image/upload/v1764186141/meerkat_svydkb.png'
+  const getProfilePhotoUrlForDisplay = () => {
+    // API'den snake_case gelebilir, kontrol et
+    const profilePhoto = backendUser?.profilePhoto || (backendUser as any)?.profile_photo
     
-    // Eğer Google fotoğrafı gizlenmişse, DB'deki fotoğrafı göster
-    if (userSettings?.showGooglePhoto === false) {
-      // Önce DB'deki profilePhoto'yu kontrol et
-      if (backendUser?.profilePhoto) {
-        return backendUser.profilePhoto
+    // Eğer Google fotoğrafı açıksa (showGooglePhoto === true), önce Google'dan geleni göster
+    // Yoksa DB'deki fotoğrafı göster
+    if (userSettings?.showGooglePhoto === true) {
+      // Önce Google'dan gelen fotoğrafı kontrol et
+      if (user?.photoURL) {
+        return user.photoURL
       }
-      // DB'de fotoğraf yoksa default avatar göster
-      return defaultAvatar
+      // Google fotoğrafı yoksa DB'deki fotoğrafı göster
+      if (profilePhoto) {
+        return profilePhoto
+      }
     }
     
-    // Google fotoğrafı açıksa, önce Google'dan geleni göster
-    if (user?.photoURL) {
-      return user.photoURL
-    }
-    
-    // Google fotoğrafı yoksa DB'deki fotoğrafı göster
-    if (backendUser?.profilePhoto) {
-      return backendUser.profilePhoto
-    }
-    
-    // Hiçbiri yoksa default avatar
-    return defaultAvatar
+    // Eğer Google fotoğrafı kapalıysa (showGooglePhoto === false), profil fotoğrafı gizlenmiş demektir
+    // Bu durumda default avatar gösterilmeli (getProfilePhotoUrl bunu yapacak)
+    // Eğer userSettings henüz yüklenmediyse veya belirsizse, helper fonksiyonu kullan
+    return getProfilePhotoUrl({
+      profilePhoto: profilePhoto,
+      showGooglePhoto: userSettings?.showGooglePhoto,
+      userSettings: {
+        showGooglePhoto: userSettings?.showGooglePhoto,
+      },
+    })
   }
 
   const getInputIcon = (field: string) => {
@@ -427,7 +509,7 @@ export default function ProfileScreen() {
           <View style={styles.headerGradientCircle2} />
         </View>
         <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
-          <Image source={{ uri: getProfilePhotoUrl() }} style={styles.profilePhoto} />
+          <Image source={{ uri: getProfilePhotoUrlForDisplay() }} style={styles.profilePhoto} />
         </Animated.View>
         <View style={styles.headerInfo}>
           <Text style={styles.headerName}>{getFullName()}</Text>
@@ -776,22 +858,78 @@ export default function ProfileScreen() {
           )}
 
           {activeTab === 'lost' && (
-            <View style={styles.emptyTabContent}>
-              <View style={styles.emptyIconContainer}>
-                <Ionicons name="search" size={getResponsiveSize(64)} color="#FF7A00" />
-              </View>
-              <Text style={styles.emptyTitle}>Kayıp Hayvan İlanı</Text>
-              <Text style={styles.emptyDescription}>
-                Kayıp hayvanınız için ilan oluşturun ve topluluğumuzdan yardım alın
-              </Text>
-              <TouchableOpacity
-                style={styles.createButton}
-                onPress={() => navigation.navigate('LostAnimal' as never)}
-                activeOpacity={0.8}
-              >
-                <Ionicons name="add-circle" size={getResponsiveSize(24)} color="#fff" />
-                <Text style={styles.createButtonText}>Kayıp Hayvan İlanı Oluştur</Text>
-              </TouchableOpacity>
+            <View style={styles.lostTabContent}>
+              {loadingLostAnimals ? (
+                <View style={styles.centerContainer}>
+                  <ActivityIndicator size="large" color="#FF7A00" />
+                  <Text style={styles.loadingText}>Yükleniyor...</Text>
+                </View>
+              ) : myLostAnimals.length === 0 ? (
+                <View style={styles.emptyTabContent}>
+                  <View style={styles.emptyIconContainer}>
+                    <Ionicons name="search" size={getResponsiveSize(64)} color="#FF7A00" />
+                  </View>
+                  <Text style={styles.emptyTitle}>Kayıp Hayvan İlanı</Text>
+                  <Text style={styles.emptyDescription}>
+                    Kayıp hayvanınız için ilan oluşturun ve topluluğumuzdan yardım alın
+                  </Text>
+                  <TouchableOpacity
+                    style={styles.createButton}
+                    onPress={() => navigation.navigate('LostAnimals' as never)}
+                    activeOpacity={0.8}
+                  >
+                    <Ionicons name="add-circle" size={getResponsiveSize(24)} color="#fff" />
+                    <Text style={styles.createButtonText}>Kayıp Hayvan İlanı Oluştur</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <>
+                  <View style={styles.lostAnimalsHeader}>
+                    <Text style={styles.lostAnimalsTitle}>Kayıp Hayvan İlanlarım</Text>
+                    <TouchableOpacity
+                      style={styles.addButton}
+                      onPress={() => navigation.navigate('LostAnimals' as never)}
+                      activeOpacity={0.8}
+                    >
+                      <Ionicons name="add-circle" size={getResponsiveSize(20)} color="#FF7A00" />
+                      <Text style={styles.addButtonText}>Yeni İlan</Text>
+                    </TouchableOpacity>
+                  </View>
+                  <View style={styles.lostAnimalsList}>
+                    {myLostAnimals.map((animal) => (
+                      <View key={animal.id} style={styles.lostAnimalCard}>
+                        <TouchableOpacity
+                          style={styles.lostAnimalCardContent}
+                          onPress={() => navigation.navigate('AnimalDetail' as never, { id: animal.id } as never)}
+                          activeOpacity={0.8}
+                        >
+                          <AnimalCard animal={animal} />
+                        </TouchableOpacity>
+                        <View style={styles.lostAnimalActions}>
+                          {animal.isActive !== false && (
+                            <TouchableOpacity
+                              style={styles.actionButton}
+                              onPress={() => handleMarkAsFound(animal.id)}
+                              activeOpacity={0.8}
+                            >
+                              <Ionicons name="checkmark-circle" size={getResponsiveSize(18)} color="#10b981" />
+                              <Text style={styles.actionButtonText}>Hayvanımı Buldum</Text>
+                            </TouchableOpacity>
+                          )}
+                          <TouchableOpacity
+                            style={[styles.actionButton, styles.deleteButton]}
+                            onPress={() => handleDeleteAnimal(animal.id)}
+                            activeOpacity={0.8}
+                          >
+                            <Ionicons name="trash-outline" size={getResponsiveSize(18)} color="#ef4444" />
+                            <Text style={[styles.actionButtonText, styles.deleteButtonText]}>Sil</Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    ))}
+                  </View>
+                </>
+              )}
             </View>
           )}
 
@@ -1280,6 +1418,82 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: getResponsiveSize(22),
     marginBottom: getResponsivePadding(32),
+  },
+  lostTabContent: {
+    flex: 1,
+  },
+  lostAnimalsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: getResponsivePadding(20),
+    paddingHorizontal: getResponsivePadding(4),
+  },
+  lostAnimalsTitle: {
+    fontSize: getResponsiveSize(20),
+    fontWeight: '700',
+    color: '#1a1a1a',
+  },
+  addButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: getResponsivePadding(6),
+    paddingVertical: getResponsivePadding(8),
+    paddingHorizontal: getResponsivePadding(12),
+    borderRadius: 12,
+    backgroundColor: '#FFF7F0',
+    borderWidth: 1,
+    borderColor: '#FF7A00',
+  },
+  addButtonText: {
+    fontSize: getResponsiveSize(14),
+    fontWeight: '600',
+    color: '#FF7A00',
+  },
+  lostAnimalsList: {
+    gap: getResponsivePadding(16),
+  },
+  lostAnimalCard: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    overflow: 'hidden',
+  },
+  lostAnimalCardContent: {
+    padding: getResponsivePadding(12),
+  },
+  lostAnimalActions: {
+    flexDirection: 'row',
+    gap: getResponsivePadding(12),
+    padding: getResponsivePadding(12),
+    borderTopWidth: 1,
+    borderTopColor: '#e5e7eb',
+    backgroundColor: '#f9f9f9',
+  },
+  actionButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: getResponsivePadding(6),
+    paddingVertical: getResponsivePadding(10),
+    borderRadius: 12,
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  deleteButton: {
+    borderColor: '#fee2e2',
+    backgroundColor: '#fef2f2',
+  },
+  actionButtonText: {
+    fontSize: getResponsiveSize(14),
+    fontWeight: '600',
+    color: '#10b981',
+  },
+  deleteButtonText: {
+    color: '#ef4444',
   },
   settingsList: {
     gap: getResponsivePadding(20),

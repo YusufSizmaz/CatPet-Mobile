@@ -138,13 +138,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const idToken = await user.getIdToken()
         // Doğrudan usersAPI.getById ile güncel veriyi çek (token ile)
         const updatedUserData = await usersAPI.getById(backendUser.id, idToken)
-        console.log('✅ Güncel kullanıcı verisi alındı:', {
-          id: updatedUserData?.id,
-          firstName: updatedUserData?.firstName,
-          lastName: updatedUserData?.lastName,
-          city: updatedUserData?.city,
-          updatedAt: updatedUserData?.updatedAt,
-        })
         setBackendUser(updatedUserData)
         console.log('✅ Backend kullanıcı bilgileri başarıyla yenilendi ve state güncellendi')
       } catch (error: any) {

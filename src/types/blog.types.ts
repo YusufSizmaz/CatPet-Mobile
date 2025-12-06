@@ -4,11 +4,19 @@ export interface BlogPost {
   content: string
   category: string
   authorId: number
-  author?: {
+  author?: string | {
     id: number
     firstName?: string
     lastName?: string
+    profilePhoto?: string | null
+    showGooglePhoto?: boolean
+    userSettings?: {
+      showGooglePhoto?: boolean
+    }
   }
+  authorPhoto?: string
+  coverImage?: string
+  excerpt?: string
   imageUrl?: string
   createdAt: string
   updatedAt: string

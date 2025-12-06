@@ -1,7 +1,20 @@
 import React, { useState } from 'react'
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Linking } from 'react-native'
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Linking, Dimensions } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
+
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window')
+
+// Responsive helper functions
+const getResponsiveSize = (size: number) => {
+  const scale = SCREEN_WIDTH / 375
+  return Math.round(size * scale)
+}
+
+const getResponsivePadding = (padding: number) => {
+  const scale = SCREEN_WIDTH / 375
+  return Math.max(8, Math.round(padding * scale))
+}
 
 export default function AboutScreen() {
   const insets = useSafeAreaInsets()
@@ -37,7 +50,8 @@ export default function AboutScreen() {
   return (
     <ScrollView 
       style={styles.container}
-      contentContainerStyle={{ paddingTop: Math.max(insets.top, 20) }}
+      contentContainerStyle={{ paddingTop: 0 }}
+      showsVerticalScrollIndicator={false}
     >
       <View style={styles.content}>
         {/* Hero Section */}
@@ -70,7 +84,7 @@ export default function AboutScreen() {
           <Text style={styles.sectionTitle}>Ne Yapıyoruz?</Text>
           <View style={styles.featureList}>
             <View style={styles.featureItem}>
-              <Ionicons name="heart" size={24} color="#FF7A00" />
+              <Ionicons name="heart" size={getResponsiveSize(22)} color="#FF7A00" />
               <View style={styles.featureText}>
                 <Text style={styles.featureTitle}>Ücretsiz Sahiplendirme</Text>
                 <Text style={styles.featureDescription}>
@@ -79,7 +93,7 @@ export default function AboutScreen() {
               </View>
             </View>
             <View style={styles.featureItem}>
-              <Ionicons name="location" size={24} color="#FF7A00" />
+              <Ionicons name="location" size={getResponsiveSize(22)} color="#FF7A00" />
               <View style={styles.featureText}>
                 <Text style={styles.featureTitle}>Mama Noktaları</Text>
                 <Text style={styles.featureDescription}>
@@ -88,7 +102,7 @@ export default function AboutScreen() {
               </View>
             </View>
             <View style={styles.featureItem}>
-              <Ionicons name="chatbubbles" size={24} color="#FF7A00" />
+              <Ionicons name="chatbubbles" size={getResponsiveSize(22)} color="#FF7A00" />
               <View style={styles.featureText}>
                 <Text style={styles.featureTitle}>Bilgi Bankası & Forum</Text>
                 <Text style={styles.featureDescription}>
@@ -120,7 +134,7 @@ export default function AboutScreen() {
             style={styles.supportButton}
             onPress={() => Linking.openURL('https://buymeacoffee.com/catpetapp')}
           >
-            <Ionicons name="cafe" size={20} color="#fff" />
+            <Ionicons name="cafe" size={getResponsiveSize(18)} color="#fff" />
             <Text style={styles.supportButtonText}>Buy Me a Coffee ile Destek Ol</Text>
           </TouchableOpacity>
         </View>
@@ -138,7 +152,7 @@ export default function AboutScreen() {
                 <Text style={styles.faqQuestion}>{faq.question}</Text>
                 <Ionicons
                   name={openFaq === index ? 'chevron-up' : 'chevron-down'}
-                  size={20}
+                  size={getResponsiveSize(18)}
                   color="#666"
                 />
               </View>
@@ -159,11 +173,17 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   content: {
-    paddingBottom: 40,
+    paddingBottom: getResponsivePadding(40),
+    paddingTop: 0,
+    marginTop: 0,
   },
   heroSection: {
-    height: 300,
+    height: Math.min(getResponsiveSize(180), SCREEN_HEIGHT * 0.28),
+    minHeight: 140,
+    maxHeight: 220,
     position: 'relative',
+    marginTop: 0,
+    marginBottom: 0,
   },
   heroImage: {
     width: '100%',
@@ -175,93 +195,95 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    padding: 20,
+    padding: getResponsivePadding(12),
+    paddingBottom: getResponsivePadding(14),
   },
   heroTitle: {
-    fontSize: 32,
+    fontSize: getResponsiveSize(24),
     fontWeight: 'bold',
     color: '#fff',
-    marginBottom: 8,
+    marginBottom: getResponsivePadding(4),
   },
   heroSubtitle: {
-    fontSize: 18,
+    fontSize: getResponsiveSize(14),
     color: '#fff',
   },
   section: {
-    padding: 20,
+    padding: getResponsivePadding(20),
   },
   sectionTitle: {
-    fontSize: 24,
+    fontSize: getResponsiveSize(22),
     fontWeight: 'bold',
-    marginBottom: 16,
+    marginBottom: getResponsivePadding(14),
     color: '#1a1a1a',
   },
   sectionText: {
-    fontSize: 16,
-    lineHeight: 24,
+    fontSize: getResponsiveSize(15),
+    lineHeight: getResponsiveSize(22),
     color: '#666',
-    marginBottom: 12,
+    marginBottom: getResponsivePadding(10),
   },
   featureList: {
-    gap: 20,
+    gap: getResponsivePadding(18),
   },
   featureItem: {
     flexDirection: 'row',
-    gap: 16,
+    gap: getResponsivePadding(14),
+    alignItems: 'flex-start',
   },
   featureText: {
     flex: 1,
   },
   featureTitle: {
-    fontSize: 18,
+    fontSize: getResponsiveSize(17),
     fontWeight: '600',
-    marginBottom: 4,
+    marginBottom: getResponsivePadding(4),
     color: '#1a1a1a',
   },
   featureDescription: {
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: getResponsiveSize(14),
+    lineHeight: getResponsiveSize(20),
     color: '#666',
   },
   supportSection: {
-    margin: 20,
-    padding: 20,
+    margin: getResponsivePadding(20),
+    padding: getResponsivePadding(18),
     backgroundColor: '#FFF7F0',
     borderRadius: 12,
     borderWidth: 1,
     borderColor: '#FFE5CC',
   },
   supportTitle: {
-    fontSize: 20,
+    fontSize: getResponsiveSize(19),
     fontWeight: 'bold',
-    marginBottom: 8,
+    marginBottom: getResponsivePadding(8),
     color: '#1a1a1a',
   },
   supportText: {
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: getResponsiveSize(14),
+    lineHeight: getResponsiveSize(20),
     color: '#666',
-    marginBottom: 16,
+    marginBottom: getResponsivePadding(14),
   },
   supportButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#FF7A00',
-    padding: 16,
+    padding: getResponsivePadding(14),
     borderRadius: 12,
-    gap: 8,
+    gap: getResponsivePadding(8),
   },
   supportButtonText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: getResponsiveSize(15),
     fontWeight: '600',
   },
   faqItem: {
     backgroundColor: '#f9f9f9',
     borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
+    padding: getResponsivePadding(14),
+    marginBottom: getResponsivePadding(10),
   },
   faqHeader: {
     flexDirection: 'row',
@@ -269,17 +291,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   faqQuestion: {
-    fontSize: 16,
+    fontSize: getResponsiveSize(15),
     fontWeight: '600',
     color: '#1a1a1a',
     flex: 1,
-    marginRight: 12,
+    marginRight: getResponsivePadding(10),
   },
   faqAnswer: {
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: getResponsiveSize(14),
+    lineHeight: getResponsiveSize(20),
     color: '#666',
-    marginTop: 12,
+    marginTop: getResponsivePadding(10),
   },
 })
 

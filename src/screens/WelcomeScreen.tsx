@@ -120,15 +120,7 @@ export default function WelcomeScreen({ isNewUser: propIsNewUser, userName: prop
       ]).start()
     })
 
-    // Auto navigate after 3 seconds
-    const timer = setTimeout(() => {
-      if (onComplete) {
-        onComplete()
-      }
-      navigation.navigate('Main' as never)
-    }, 3000)
-
-    return () => clearTimeout(timer)
+    // Auto navigate removed - user must manually close the welcome screen
   }, [onComplete, navigation])
 
   const heartRotation = heartScale.interpolate({

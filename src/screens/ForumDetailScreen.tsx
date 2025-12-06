@@ -15,7 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useRoute, useNavigation } from '@react-navigation/native'
 import { useAuth } from '../contexts/AuthContext'
 import { forumAPI } from '../services/api'
-import { getProfilePhotoUrl, hasProfilePhoto } from '../utils/profilePhoto'
+import { getProfilePhotoUrl } from '../utils/profilePhoto'
 
 export default function ForumDetailScreen() {
   const route = useRoute()
@@ -213,20 +213,10 @@ export default function ForumDetailScreen() {
           <Text style={styles.topicTitle}>{topic.title}</Text>
           <View style={styles.topicMeta}>
             <View style={styles.authorInfo}>
-              {hasProfilePhoto(topic.createdUser) ? (
-                <Image
-                  source={{ uri: getProfilePhotoUrl(topic.createdUser) }}
-                  style={styles.avatarImage}
-                />
-              ) : (
-                <View style={styles.avatarContainer}>
-                  <Text style={styles.avatarText}>
-                    {isLoggedIn
-                      ? (topic.createdUser?.firstName || 'K')[0].toUpperCase()
-                      : '?'}
-                  </Text>
-                </View>
-              )}
+              <Image
+                source={{ uri: getProfilePhotoUrl(topic.createdUser) }}
+                style={styles.avatarImage}
+              />
               <Text style={styles.authorName}>
                 {isLoggedIn
                   ? `${topic.createdUser?.firstName || ''} ${topic.createdUser?.lastName || ''}`.trim() || 'Kullanıcı'
@@ -296,18 +286,10 @@ export default function ForumDetailScreen() {
                   <View key={comment.id} style={styles.commentItem}>
                     <View style={styles.commentHeader}>
                       <View style={styles.commentAuthor}>
-                        {hasProfilePhoto(comment.createdUser) ? (
-                          <Image
-                            source={{ uri: getProfilePhotoUrl(comment.createdUser) }}
-                            style={styles.commentAvatarImage}
-                          />
-                        ) : (
-                          <View style={styles.commentAvatar}>
-                            <Text style={styles.commentAvatarText}>
-                              {isLoggedIn ? (comment.createdUser?.firstName || 'K')[0].toUpperCase() : '?'}
-                            </Text>
-                          </View>
-                        )}
+                        <Image
+                          source={{ uri: getProfilePhotoUrl(comment.createdUser) }}
+                          style={styles.commentAvatarImage}
+                        />
                         <View>
                           <Text style={styles.commentAuthorName}>
                             {displayName}
