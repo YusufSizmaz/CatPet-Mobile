@@ -1,19 +1,64 @@
-import React, { useState } from 'react'
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, ActivityIndicator, Share, Linking } from 'react-native'
+import React, { useState, useEffect } from 'react'
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, ActivityIndicator, Share, Linking, Alert } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useRoute, useNavigation } from '@react-navigation/native'
 import { useAnimal } from '../hooks/useAnimals'
 import { useAuth } from '../contexts/AuthContext'
 import { ANIMAL_TYPE_LABELS, GENDER_LABELS } from '../utils/constants'
 import { Ionicons } from '@expo/vector-icons'
+import { favoritesAPI, animalsAPIExtended } from '../services/api'
+import PhoneModal from '../components/PhoneModal'
+import SuccessDialog from '../components/SuccessDialog'
+import { getProfilePhotoUrl } from '../utils/profilePhoto'
 
 export default function AnimalDetailScreen() {
   const route = useRoute()
   const navigation = useNavigation()
+  const insets = useSafeAreaInsets()
   const { id } = route.params as { id: number }
   const { animal, loading, error } = useAnimal(id)
-  const { user } = useAuth()
+  const { user, backendUser } = useAuth()
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
   const [isFavorite, setIsFavorite] = useState(false)
+  const [loadingFavorite, setLoadingFavorite] = useState(false)
+  const [loadingPhone, setLoadingPhone] = useState(false)
+  const [showPhoneModal, setShowPhoneModal] = useState(false)
+  const [phoneData, setPhoneData] = useState<{ ownerName: string; phone: string } | null>(null)
+  const [errorDialog, setErrorDialog] = useState<{
+    visible: boolean
+    title: string
+    message: string
+    type: 'success' | 'error' | 'info'
+  }>({
+    visible: false,
+    title: '',
+    message: '',
+    type: 'info',
+  })
+
+  // Load favorite status
+  useEffect(() => {
+    const loadFavoriteStatus = async () => {
+      if (!user || !animal?.id) return
+      
+      try {
+        const token = await user.getIdToken()
+        const result = await favoritesAPI.checkFavorite(animal.id, token)
+        setIsFavorite(result.isFavorite)
+      } catch (error: any) {
+        // 401 hatası kullanıcı henüz backend'de kayıtlı olmayabilir veya token geçersiz
+        // Bu durumda sessizce false set ediyoruz
+        if (error?.message?.includes('401')) {
+          console.debug('Favorite status: User not authenticated in backend yet')
+        } else {
+          console.error('Error loading favorite status:', error)
+        }
+        setIsFavorite(false)
+      }
+    }
+
+    loadFavoriteStatus()
+  }, [user, animal?.id])
 
   const hashName = (name: string | undefined | null): string => {
     if (!name || name.trim().length === 0) return '***'
@@ -49,14 +94,129 @@ export default function AnimalDetailScreen() {
     }
   }
 
-  const handleCall = () => {
-    // TODO: Implement phone call
-    Linking.openURL('tel:+905551234567')
+  const handleToggleFavorite = async () => {
+    if (!user) {
+      Alert.alert('Giriş Gerekli', 'Favorilere eklemek için giriş yapmalısınız')
+      return
+    }
+
+    setLoadingFavorite(true)
+    try {
+      const token = await user.getIdToken()
+      await favoritesAPI.toggleFavorite(animal!.id, token, !isFavorite)
+      setIsFavorite(!isFavorite)
+    } catch (error: any) {
+      Alert.alert('Hata', error.message || 'Bir hata oluştu')
+    } finally {
+      setLoadingFavorite(false)
+    }
   }
 
-  const handleMessage = () => {
-    // TODO: Implement message
-    Linking.openURL('sms:+905551234567')
+  const handleCall = async () => {
+    if (!user) {
+      setErrorDialog({
+        visible: true,
+        title: 'Giriş Gerekli',
+        message: 'Telefon numarasını görmek için giriş yapmalısınız.',
+        type: 'info',
+      })
+      return
+    }
+
+    if (!backendUser?.verify) {
+      setErrorDialog({
+        visible: true,
+        title: 'Hesap Doğrulanmamış',
+        message: 'Telefon numarasını görmek için hesabınızı doğrulamanız gerekmektedir.',
+        type: 'info',
+      })
+      return
+    }
+
+    if (!backendUser.phone) {
+      setErrorDialog({
+        visible: true,
+        title: 'Telefon Numarası Yok',
+        message: 'Telefon numaranızı profil sayfanızdan eklemeniz gerekmektedir.',
+        type: 'info',
+      })
+      return
+    }
+
+    setLoadingPhone(true)
+    try {
+      const token = await user.getIdToken()
+      const result = await animalsAPIExtended.getOwnerPhone(animal!.id, token)
+      
+      if (result.error) {
+        setErrorDialog({
+          visible: true,
+          title: 'Hata',
+          message: result.message || 'Telefon numarası alınamadı.',
+          type: 'error',
+        })
+        return
+      }
+
+      if (result.phone) {
+        setPhoneData({
+          ownerName: result.ownerName || 'İlan Sahibi',
+          phone: result.phone,
+        })
+        setShowPhoneModal(true)
+      }
+    } catch (error: any) {
+      setErrorDialog({
+        visible: true,
+        title: 'Hata',
+        message: error.message || 'Telefon numarası alınırken bir hata oluştu.',
+        type: 'error',
+      })
+    } finally {
+      setLoadingPhone(false)
+    }
+  }
+
+  const handleMessage = async () => {
+    if (!user) {
+      Alert.alert('Giriş Gerekli', 'Mesaj göndermek için giriş yapmalısınız')
+      return
+    }
+
+    if (!backendUser?.verify) {
+      Alert.alert(
+        'Hesap Doğrulanmamış',
+        'Mesaj göndermek için hesabınızı doğrulamanız gerekmektedir.'
+      )
+      return
+    }
+
+    if (!backendUser.phone) {
+      Alert.alert(
+        'Telefon Numarası Yok',
+        'Telefon numaranızı profil sayfanızdan eklemeniz gerekmektedir.'
+      )
+      return
+    }
+
+    setLoadingPhone(true)
+    try {
+      const token = await user.getIdToken()
+      const result = await animalsAPIExtended.getOwnerPhone(animal!.id, token)
+      
+      if (result.error) {
+        Alert.alert('Hata', result.message || 'Telefon numarası alınamadı')
+        return
+      }
+
+      if (result.phone) {
+        Linking.openURL(`sms:${result.phone}`)
+      }
+    } catch (error: any) {
+      Alert.alert('Hata', error.message || 'Telefon numarası alınırken bir hata oluştu')
+    } finally {
+      setLoadingPhone(false)
+    }
   }
 
   if (loading) {
@@ -89,7 +249,10 @@ export default function AnimalDetailScreen() {
     : 'https://via.placeholder.com/800x450'
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView 
+      style={styles.container}
+      contentContainerStyle={{ paddingTop: Math.max(insets.top, 0) }}
+    >
       {/* Images */}
       <View style={styles.imageSection}>
         <Image source={{ uri: mainImage }} style={styles.mainImage} resizeMode="cover" />
@@ -129,13 +292,18 @@ export default function AnimalDetailScreen() {
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.actionButton}
-              onPress={() => setIsFavorite(!isFavorite)}
+              onPress={handleToggleFavorite}
+              disabled={loadingFavorite}
             >
-              <Ionicons
-                name={isFavorite ? 'heart' : 'heart-outline'}
-                size={20}
-                color={isFavorite ? '#FF7A00' : '#666'}
-              />
+              {loadingFavorite ? (
+                <ActivityIndicator size="small" color="#FF7A00" />
+              ) : (
+                <Ionicons
+                  name={isFavorite ? 'heart' : 'heart-outline'}
+                  size={20}
+                  color={isFavorite ? '#FF7A00' : '#666'}
+                />
+              )}
             </TouchableOpacity>
           </View>
         </View>
@@ -222,7 +390,7 @@ export default function AnimalDetailScreen() {
           <View style={styles.ownerHeader}>
             <Image
               source={{
-                uri: animal.owner?.profilePhoto || 'https://via.placeholder.com/100',
+                uri: getProfilePhotoUrl(animal.owner),
               }}
               style={[
                 styles.ownerPhoto,
@@ -235,18 +403,35 @@ export default function AnimalDetailScreen() {
             </View>
           </View>
           <View style={styles.contactButtons}>
-            <TouchableOpacity style={styles.contactButton} onPress={handleCall}>
-              <Ionicons name="call-outline" size={20} color="#fff" />
-              <Text style={styles.contactButtonText}>Telefonu Göster</Text>
+            <TouchableOpacity 
+              style={[styles.contactButton, loadingPhone && styles.contactButtonDisabled]} 
+              onPress={handleCall}
+              disabled={loadingPhone}
+            >
+              {loadingPhone ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <>
+                  <Ionicons name="call-outline" size={20} color="#fff" />
+                  <Text style={styles.contactButtonText}>Telefonu Göster</Text>
+                </>
+              )}
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.contactButton, styles.contactButtonOutline]}
+              style={[styles.contactButton, styles.contactButtonOutline, loadingPhone && styles.contactButtonDisabled]}
               onPress={handleMessage}
+              disabled={loadingPhone}
             >
-              <Ionicons name="mail-outline" size={20} color="#FF7A00" />
-              <Text style={[styles.contactButtonText, styles.contactButtonTextOutline]}>
-                Mesaj Gönder
-              </Text>
+              {loadingPhone ? (
+                <ActivityIndicator color="#FF7A00" />
+              ) : (
+                <>
+                  <Ionicons name="mail-outline" size={20} color="#FF7A00" />
+                  <Text style={[styles.contactButtonText, styles.contactButtonTextOutline]}>
+                    Mesaj Gönder
+                  </Text>
+                </>
+              )}
             </TouchableOpacity>
           </View>
           <View style={styles.note}>
@@ -257,6 +442,28 @@ export default function AnimalDetailScreen() {
           </View>
         </View>
       </View>
+
+      {/* Phone Modal */}
+      {phoneData && (
+        <PhoneModal
+          visible={showPhoneModal}
+          ownerName={phoneData.ownerName}
+          phone={phoneData.phone}
+          onClose={() => {
+            setShowPhoneModal(false)
+            setPhoneData(null)
+          }}
+        />
+      )}
+
+      {/* Error/Info Dialog */}
+      <SuccessDialog
+        visible={errorDialog.visible}
+        title={errorDialog.title}
+        message={errorDialog.message}
+        type={errorDialog.type}
+        onClose={() => setErrorDialog({ ...errorDialog, visible: false })}
+      />
     </ScrollView>
   )
 }
@@ -481,6 +688,9 @@ const styles = StyleSheet.create({
   },
   contactButtonTextOutline: {
     color: '#FF7A00',
+  },
+  contactButtonDisabled: {
+    opacity: 0.6,
   },
   note: {
     backgroundColor: '#FFF7F0',

@@ -1,8 +1,12 @@
-import React from 'react'
+import React, { useState, useEffect, useRef } from 'react'
+import { View, ActivityIndicator, StyleSheet, TouchableOpacity, Text } from 'react-native'
 import { NavigationContainer } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
+import { Ionicons } from '@expo/vector-icons'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useAuth } from '../contexts/AuthContext'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 
 // Screens (will be created)
 import HomeScreen from '../screens/HomeScreen'
@@ -16,15 +20,76 @@ import RegisterScreen from '../screens/RegisterScreen'
 import AboutScreen from '../screens/AboutScreen'
 import LostAnimalScreen from '../screens/LostAnimalScreen'
 import BlogDetailScreen from '../screens/BlogDetailScreen'
+<<<<<<< HEAD
 import ForumTopicDetailScreen from '../screens/ForumTopicDetailScreen'
 import LostAnimalDetailScreen from '../screens/LostAnimalDetailScreen'
+=======
+import ForumDetailScreen from '../screens/ForumDetailScreen'
+import OnboardingScreen from '../screens/OnboardingScreen'
+import WelcomeScreen from '../screens/WelcomeScreen'
+>>>>>>> 54916bd44756bae6c6983f36deaeabe677830d61
 
 const Stack = createNativeStackNavigator()
 const Tab = createBottomTabNavigator()
 
-function MainTabs() {
+// Custom Header Component for Register Screen
+function RegisterHeader({ navigation }: { navigation: any }) {
+  const insets = useSafeAreaInsets()
   return (
-    <Tab.Navigator>
+    <View style={[styles.registerHeader, { paddingTop: Math.max(insets.top, 0) }]}>
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={() => navigation.goBack()}
+        activeOpacity={0.7}
+      >
+        <Ionicons name="arrow-back" size={24} color="#FF7A00" />
+      </TouchableOpacity>
+      <Text style={styles.registerHeaderTitle}>Kayıt Ol</Text>
+      <View style={styles.headerSpacer} />
+    </View>
+  )
+}
+
+function MainTabs() {
+  const insets = useSafeAreaInsets()
+  
+  return (
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        tabBarIcon: ({ focused, color, size }) => {
+          let iconName: string
+
+          if (route.name === 'Home') {
+            iconName = focused ? 'home' : 'home-outline'
+          } else if (route.name === 'Animals') {
+            iconName = focused ? 'heart' : 'heart-outline'
+          } else if (route.name === 'FoodPoints') {
+            iconName = focused ? 'location' : 'location-outline'
+          } else if (route.name === 'LostAnimals') {
+            iconName = focused ? 'search' : 'search-outline'
+          } else if (route.name === 'Blog') {
+            iconName = focused ? 'library' : 'library-outline'
+          } else if (route.name === 'Profile') {
+            iconName = focused ? 'person' : 'person-outline'
+          } else {
+            iconName = 'help-outline'
+          }
+
+          return <Ionicons name={iconName as any} size={size} color={color} />
+        },
+        tabBarActiveTintColor: '#FF7A00',
+        tabBarInactiveTintColor: '#999',
+        tabBarStyle: {
+          backgroundColor: '#fff',
+          borderTopWidth: 1,
+          borderTopColor: '#e5e5e5',
+          paddingBottom: Math.max(insets.bottom, 5),
+          paddingTop: 5,
+          height: 60 + Math.max(insets.bottom - 5, 0),
+        },
+        headerShown: false,
+      })}
+    >
       <Tab.Screen 
         name="Home" 
         component={HomeScreen}
@@ -39,6 +104,11 @@ function MainTabs() {
         name="FoodPoints" 
         component={FoodPointsScreen}
         options={{ title: 'Mama Bırak' }}
+      />
+      <Tab.Screen 
+        name="LostAnimals" 
+        component={LostAnimalScreen}
+        options={{ title: 'Kayıp Hayvanlar' }}
       />
       <Tab.Screen 
         name="Blog" 
@@ -56,15 +126,135 @@ function MainTabs() {
 
 export default function AppNavigator() {
   const { user, loading } = useAuth()
+  const [isOnboardingCompleted, setIsOnboardingCompleted] = useState<boolean | null>(null)
+  const [isCheckingOnboarding, setIsCheckingOnboarding] = useState(true)
+  const [showWelcome, setShowWelcome] = useState<{ isNewUser: boolean; userName?: string } | null>(null)
+  const navigationRef = useRef<any>(null)
 
-  if (loading) {
-    // Return loading screen
-    return null
+  useEffect(() => {
+    console.log('🎉 showWelcome state changed:', showWelcome)
+  }, [showWelcome])
+
+  const checkOnboardingStatus = async () => {
+    try {
+      const completed = await AsyncStorage.getItem('onboarding_completed')
+      setIsOnboardingCompleted(completed === 'true')
+    } catch (error) {
+      console.error('Error checking onboarding status:', error)
+      setIsOnboardingCompleted(false)
+    } finally {
+      setIsCheckingOnboarding(false)
+    }
+  }
+
+  const checkWelcomeScreen = async () => {
+    try {
+      // Retry mechanism - flag set edilmesi biraz zaman alabilir
+      let retries = 0
+      const maxRetries = 5
+      
+      const checkFlag = async (): Promise<void> => {
+        const welcomeData = await AsyncStorage.getItem('showWelcomeScreen')
+        console.log(`🔍 Checking welcome screen flag (attempt ${retries + 1}):`, welcomeData)
+        
+        if (welcomeData) {
+          const parsed = JSON.parse(welcomeData)
+          console.log('✅ Welcome screen flag found, showing welcome:', parsed)
+          // Set state immediately
+          setShowWelcome(parsed)
+          // DON'T remove flag immediately - let WelcomeScreen handle it
+          // Flag will be removed when WelcomeScreen completes
+        } else if (retries < maxRetries) {
+          // Retry after a delay if flag not found yet
+          retries++
+          setTimeout(() => {
+            checkFlag()
+          }, 400)
+        } else {
+          console.log('❌ No welcome screen flag found after retries')
+          setShowWelcome(null)
+        }
+      }
+      
+      await checkFlag()
+    } catch (error) {
+      console.error('Error checking welcome screen:', error)
+      setShowWelcome(null)
+    }
+  }
+
+  useEffect(() => {
+    checkOnboardingStatus()
+  }, [])
+
+  useEffect(() => {
+    if (user) {
+      // Delay to ensure AsyncStorage write is complete (increased delay for reliability)
+      // Register işlemi sırasında flag set ediliyor, bu yüzden daha uzun delay gerekiyor
+      const timer = setTimeout(() => {
+        checkWelcomeScreen()
+      }, 800)
+      return () => clearTimeout(timer)
+    } else {
+      setShowWelcome(null)
+    }
+  }, [user])
+
+  // Navigate to Welcome screen when showWelcome changes
+  useEffect(() => {
+    if (showWelcome && user && navigationRef.current) {
+      console.log('🚀 Navigating to Welcome screen')
+      setTimeout(() => {
+        navigationRef.current?.navigate('Welcome')
+      }, 100)
+    }
+  }, [showWelcome, user])
+
+  const handleOnboardingComplete = () => {
+    setIsOnboardingCompleted(true)
+  }
+
+  if (loading || isCheckingOnboarding) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#FF7A00" />
+      </View>
+    )
+  }
+
+  // Show onboarding if not completed
+  if (!isOnboardingCompleted) {
+    return (
+      <NavigationContainer>
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="Onboarding">
+            {() => <OnboardingScreen onComplete={handleOnboardingComplete} />}
+          </Stack.Screen>
+        </Stack.Navigator>
+      </NavigationContainer>
+    )
   }
 
   return (
-    <NavigationContainer>
-      <Stack.Navigator>
+    <NavigationContainer
+      ref={navigationRef}
+      onReady={() => {
+        // When navigation is ready, check if we should show welcome screen
+        if (showWelcome && user) {
+          setTimeout(() => {
+            navigationRef.current?.navigate('Welcome')
+          }, 100)
+        }
+      }}
+    >
+      <Stack.Navigator
+        key={showWelcome ? 'welcome' : 'main'}
+        initialRouteName="Main"
+        screenOptions={{
+          headerBackTitle: 'Geri',
+          headerBackTitleVisible: true,
+        }}
+      >
         {user ? (
           <>
             <Stack.Screen 
@@ -73,24 +263,104 @@ export default function AppNavigator() {
               options={{ headerShown: false }}
             />
             <Stack.Screen 
+              name="Welcome" 
+              options={{ headerShown: false }}
+            >
+              {({ navigation }) => (
+                <WelcomeScreen 
+                  isNewUser={showWelcome?.isNewUser ?? false} 
+                  userName={showWelcome?.userName}
+                  onComplete={async () => {
+                    console.log('🎉 Welcome screen completed, hiding welcome')
+                    // Remove flag when welcome screen completes
+                    await AsyncStorage.removeItem('showWelcomeScreen')
+                    setShowWelcome(null)
+                    // Navigate to Main
+                    navigation.navigate('Main' as never)
+                  }}
+                />
+              )}
+            </Stack.Screen>
+            <Stack.Screen 
               name="AnimalDetail" 
               component={AnimalDetailScreen}
-              options={{ title: 'Hayvan Detayı' }}
+              options={{
+                title: 'Hayvan Detayı',
+                headerStyle: {
+                  backgroundColor: '#fff',
+                },
+                headerShadowVisible: false,
+                headerTintColor: '#FF7A00',
+                headerTitleStyle: {
+                  fontWeight: '700',
+                  color: '#1a1a1a',
+                },
+              }}
             />
             <Stack.Screen 
               name="About" 
               component={AboutScreen}
-              options={{ title: 'Hakkımızda' }}
+              options={{
+                title: 'Hakkımızda',
+                headerStyle: {
+                  backgroundColor: '#fff',
+                },
+                headerShadowVisible: false,
+                headerTintColor: '#FF7A00',
+                headerTitleStyle: {
+                  fontWeight: '700',
+                  color: '#1a1a1a',
+                },
+              }}
             />
             <Stack.Screen 
               name="LostAnimal" 
               component={LostAnimalScreen}
-              options={{ title: 'Kayıp İlanı' }}
+              options={{
+                title: 'Kayıp İlanı',
+                headerBackTitle: 'Bir önceki sayfa',
+                headerStyle: {
+                  backgroundColor: '#fff',
+                },
+                headerShadowVisible: false,
+                headerTintColor: '#FF7A00',
+                headerTitleStyle: {
+                  fontWeight: '700',
+                  color: '#1a1a1a',
+                },
+              }}
             />
             <Stack.Screen 
-              name="BlogDetail" 
+              name="BlogDetail"
               component={BlogDetailScreen}
-              options={{ title: 'Blog Yazısı' }}
+              options={{
+                title: 'Blog Yazısı',
+                headerStyle: {
+                  backgroundColor: '#fff',
+                },
+                headerShadowVisible: false,
+                headerTintColor: '#FF7A00',
+                headerTitleStyle: {
+                  fontWeight: '700',
+                  color: '#1a1a1a',
+                },
+              }}
+            />
+            <Stack.Screen 
+              name="ForumDetail" 
+              component={ForumDetailScreen}
+              options={{
+                title: 'Forum Konusu',
+                headerStyle: {
+                  backgroundColor: '#fff',
+                },
+                headerShadowVisible: false,
+                headerTintColor: '#FF7A00',
+                headerTitleStyle: {
+                  fontWeight: '700',
+                  color: '#1a1a1a',
+                },
+              }}
             />
             <Stack.Screen 
               name="ForumTopicDetail" 
@@ -113,7 +383,14 @@ export default function AppNavigator() {
             <Stack.Screen 
               name="Register" 
               component={RegisterScreen}
-              options={{ title: 'Kayıt Ol' }}
+              options={({ navigation }) => ({
+                headerShown: true,
+                header: () => <RegisterHeader navigation={navigation} />,
+                headerStyle: {
+                  backgroundColor: '#FF7A00',
+                },
+                headerTintColor: '#fff',
+              })}
             />
           </>
         )}
@@ -121,4 +398,45 @@ export default function AppNavigator() {
     </NavigationContainer>
   )
 }
+
+const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFF7F0',
+  },
+  registerHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 2,
+    borderBottomColor: '#FF7A00',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#FFF7F0',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  registerHeaderTitle: {
+    flex: 1,
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1a1a1a',
+  },
+  headerSpacer: {
+    width: 40,
+  },
+})
 

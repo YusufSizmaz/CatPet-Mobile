@@ -1,13 +1,16 @@
 import React from 'react'
 import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, ActivityIndicator, Share } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useRoute, useNavigation } from '@react-navigation/native'
 import { useBlogPost } from '../hooks/useBlog'
 import { cleanImageUrl } from '../utils/imageUtils'
 import { Ionicons } from '@expo/vector-icons'
+import { getProfilePhotoUrl } from '../utils/profilePhoto'
 
 export default function BlogDetailScreen() {
   const route = useRoute()
   const navigation = useNavigation()
+  const insets = useSafeAreaInsets()
   const { id } = route.params as { id: number }
   const { post, loading, error } = useBlogPost(id)
 
@@ -43,8 +46,35 @@ export default function BlogDetailScreen() {
     )
   }
 
+  // Get author photo URL
+  // Always use getProfilePhotoUrl to respect user's showGooglePhoto setting
+  const getAuthorPhotoUrl = () => {
+    // If author is an object, use getProfilePhotoUrl to check showGooglePhoto setting
+    if (post.author && typeof post.author === 'object') {
+      return getProfilePhotoUrl(post.author)
+    }
+    
+    // If authorPhoto is provided but author object is not available, use it
+    // (This might happen if backend doesn't send full author object)
+    if (post.authorPhoto) {
+      return post.authorPhoto
+    }
+    
+    // Default avatar if nothing is available
+    return getProfilePhotoUrl(null)
+  }
+  
+  const authorPhotoUrl = getAuthorPhotoUrl()
+  const authorName = typeof post.author === 'string' ? post.author : 
+    (post.author && typeof post.author === 'object' ? 
+      `${post.author.firstName || ''} ${post.author.lastName || ''}`.trim() || 'CatPet' : 
+      'CatPet')
+
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView 
+      style={styles.container}
+      contentContainerStyle={{ paddingTop: Math.max(insets.top, 0) }}
+    >
       {post.coverImage && (
         <Image
           source={{ uri: cleanImageUrl(post.coverImage) }}
@@ -61,18 +91,23 @@ export default function BlogDetailScreen() {
         {post.excerpt && <Text style={styles.excerpt}>{post.excerpt}</Text>}
         <View style={styles.meta}>
           <View style={styles.authorInfo}>
+<<<<<<< HEAD
             {post.authorPhoto ? (
               <Image
                 source={{ uri: cleanImageUrl(post.authorPhoto) }}
                 style={styles.authorPhoto}
                 onError={() => {}}
               />
+=======
+            {authorPhotoUrl ? (
+              <Image source={{ uri: authorPhotoUrl }} style={styles.authorPhoto} />
+>>>>>>> 54916bd44756bae6c6983f36deaeabe677830d61
             ) : (
               <View style={styles.authorPlaceholder}>
                 <Ionicons name="person-outline" size={16} color="#999" />
               </View>
             )}
-            <Text style={styles.authorName}>{post.author || 'CatPet'}</Text>
+            <Text style={styles.authorName}>{authorName}</Text>
           </View>
           <Text style={styles.metaSeparator}>·</Text>
           <Text style={styles.metaDate}>{new Date(post.createdAt).toLocaleDateString('tr-TR')}</Text>

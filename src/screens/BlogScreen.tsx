@@ -1,11 +1,28 @@
-import React, { useState } from 'react'
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, ActivityIndicator } from 'react-native'
+import React, { useState, useEffect, useRef } from 'react'
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, ActivityIndicator, Modal, TextInput, Alert, Dimensions } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
 import { useBlog } from '../hooks/useBlog'
 import { useForumTopics } from '../hooks/useForum'
 import { BlogPost } from '../types/blog.types'
 import { formatRelativeTime } from '../utils/formatters'
 import { Ionicons } from '@expo/vector-icons'
+import { useAuth } from '../contexts/AuthContext'
+import { forumAPI } from '../services/api'
+import { getProfilePhotoUrl } from '../utils/profilePhoto'
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window')
+
+// Responsive helper functions
+const getResponsiveSize = (size: number) => {
+  const scale = SCREEN_WIDTH / 375
+  return Math.round(size * scale)
+}
+
+const getResponsivePadding = (padding: number) => {
+  const scale = SCREEN_WIDTH / 375
+  return Math.max(8, Math.round(padding * scale))
+}
 
 const categories = ['all', 'cats', 'dogs', 'birds', 'fish', 'rodents', 'other']
 const categoryLabels: Record<string, string> = {
@@ -18,20 +35,106 @@ const categoryLabels: Record<string, string> = {
   other: 'Diğer',
 }
 
+const formatRelativeTime = (dateString: string) => {
+  const date = new Date(dateString)
+  const now = new Date()
+  const diffMs = now.getTime() - date.getTime()
+  const diffMins = Math.floor(diffMs / 60000)
+  const diffHours = Math.floor(diffMs / 3600000)
+  const diffDays = Math.floor(diffMs / 86400000)
+
+  if (diffMins < 1) return 'Az önce'
+  if (diffMins < 60) return `${diffMins} dakika önce`
+  if (diffHours < 24) return `${diffHours} saat önce`
+  if (diffDays < 7) return `${diffDays} gün önce`
+  return date.toLocaleDateString('tr-TR')
+}
+
+const maskName = (name: string | undefined | null): string => {
+  if (!name || name.trim().length === 0) return '***'
+  const trimmed = name.trim()
+  return trimmed[0].toUpperCase() + '***'
+}
+
 export default function BlogScreen() {
   const [activeTab, setActiveTab] = useState<'blog' | 'forum'>('blog')
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const navigation = useNavigation()
+  const insets = useSafeAreaInsets()
+  const { user, backendUser } = useAuth()
   const { posts, loading, error } = useBlog(selectedCategory === 'all' ? undefined : { category: selectedCategory })
+<<<<<<< HEAD
   const { topics: forumTopics, loading: forumLoading, error: forumError } = useForumTopics()
+=======
+  
+  const [forumTopics, setForumTopics] = useState<any[]>([])
+  const [forumLoading, setForumLoading] = useState(false)
+  const [forumError, setForumError] = useState<string | null>(null)
+  const [showNewTopicModal, setShowNewTopicModal] = useState(false)
+  const [newTopicTitle, setNewTopicTitle] = useState('')
+  const [newTopicContent, setNewTopicContent] = useState('')
+  const [submittingTopic, setSubmittingTopic] = useState(false)
+  const forumLoadedRef = useRef<string | null>(null)
+>>>>>>> 54916bd44756bae6c6983f36deaeabe677830d61
 
   const featuredPost = posts.length > 0 ? posts[0] : null
   const regularPosts = posts.slice(1)
+  const isLoggedIn = !!user
+
+  // Load forum topics
+  useEffect(() => {
+    if (activeTab !== 'forum' || forumLoadedRef.current === activeTab) return
+    forumLoadedRef.current = activeTab
+
+    const loadForumTopics = async () => {
+      setForumLoading(true)
+      setForumError(null)
+      try {
+        const topics = await forumAPI.getAllTopics()
+        setForumTopics(topics)
+      } catch (err: any) {
+        console.error('Forum topics yükleme hatası:', err)
+        setForumError(err.message || 'Forum konuları yüklenirken bir hata oluştu')
+      } finally {
+        setForumLoading(false)
+      }
+    }
+
+    loadForumTopics()
+  }, [activeTab])
+
+  const handleCreateTopic = async () => {
+    if (!user || !newTopicTitle.trim() || !newTopicContent.trim()) {
+      Alert.alert('Hata', 'Lütfen başlık ve içerik girin')
+      return
+    }
+
+    setSubmittingTopic(true)
+    setForumError(null)
+
+    try {
+      const token = await user.getIdToken()
+      const newTopic = await forumAPI.createTopic({
+        title: newTopicTitle.trim(),
+        content: newTopicContent.trim(),
+      }, token)
+      
+      setForumTopics(prev => [newTopic, ...prev])
+      setShowNewTopicModal(false)
+      setNewTopicTitle('')
+      setNewTopicContent('')
+    } catch (err: any) {
+      console.error('Konu oluşturma hatası:', err)
+      Alert.alert('Hata', err.message || 'Konu oluşturulurken bir hata oluştu')
+    } finally {
+      setSubmittingTopic(false)
+    }
+  }
 
   return (
     <View style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: Math.max(insets.top, 20) }]}>
         <Text style={styles.title}>CatPet Bilgi Bankası & Forum</Text>
         <Text style={styles.subtitle}>
           Tüm hayvan dostlarımız hakkında bilgi edinin, topluluk forumumuzda sorular sorun ve deneyimlerinizi paylaşın.
@@ -97,41 +200,65 @@ export default function BlogScreen() {
           ) : (
             <>
               {/* Featured Post */}
-              {featuredPost && (
-                <TouchableOpacity
-                  style={styles.featuredCard}
-                  onPress={() => navigation.navigate('BlogDetail' as never, { id: featuredPost.id } as never)}
-                >
-                  {featuredPost.coverImage && (
-                    <Image source={{ uri: featuredPost.coverImage }} style={styles.featuredImage} />
-                  )}
-                  <View style={styles.featuredContent}>
-                    <View style={styles.featuredBadge}>
-                      <Text style={styles.featuredBadgeText}>Öne Çıkan Yazı</Text>
-                    </View>
-                    <Text style={styles.featuredTitle}>{featuredPost.title}</Text>
-                    <Text style={styles.featuredExcerpt} numberOfLines={3}>
-                      {featuredPost.excerpt || featuredPost.content?.substring(0, 200) || ''}
-                    </Text>
-                    <View style={styles.featuredFooter}>
-                      <View style={styles.authorInfo}>
-                        {featuredPost.authorPhoto ? (
-                          <Image
-                            source={{ uri: featuredPost.authorPhoto }}
-                            style={styles.authorPhoto}
-                          />
-                        ) : (
-                          <View style={styles.authorPlaceholder}>
-                            <Ionicons name="person-outline" size={16} color="#999" />
-                          </View>
-                        )}
-                        <Text style={styles.authorName}>{featuredPost.author || 'CatPet'}</Text>
+              {featuredPost && (() => {
+                // Get author photo URL for featured post
+                // Always use getProfilePhotoUrl to respect user's showGooglePhoto setting
+                const getFeaturedAuthorPhotoUrl = () => {
+                  // If author is an object, use getProfilePhotoUrl to check showGooglePhoto setting
+                  if (featuredPost.author && typeof featuredPost.author === 'object') {
+                    return getProfilePhotoUrl(featuredPost.author)
+                  }
+                  // If authorPhoto is provided but author object is not available, use it
+                  // (This might happen if backend doesn't send full author object)
+                  if (featuredPost.authorPhoto) {
+                    return featuredPost.authorPhoto
+                  }
+                  // Default avatar if nothing is available
+                  return getProfilePhotoUrl(null)
+                }
+                
+                const featuredAuthorPhotoUrl = getFeaturedAuthorPhotoUrl()
+                const featuredAuthorName = typeof featuredPost.author === 'string' ? featuredPost.author : 
+                  (featuredPost.author && typeof featuredPost.author === 'object' ? 
+                    `${featuredPost.author.firstName || ''} ${featuredPost.author.lastName || ''}`.trim() || 'CatPet' : 
+                    'CatPet')
+                
+                return (
+                  <TouchableOpacity
+                    style={styles.featuredCard}
+                    onPress={() => navigation.navigate('BlogDetail' as never, { id: featuredPost.id } as never)}
+                  >
+                    {featuredPost.coverImage && (
+                      <Image source={{ uri: featuredPost.coverImage }} style={styles.featuredImage} />
+                    )}
+                    <View style={styles.featuredContent}>
+                      <View style={styles.featuredBadge}>
+                        <Text style={styles.featuredBadgeText}>Öne Çıkan Yazı</Text>
                       </View>
-                      <Text style={styles.featuredDate}>4 dk okuma</Text>
+                      <Text style={styles.featuredTitle}>{featuredPost.title}</Text>
+                      <Text style={styles.featuredExcerpt} numberOfLines={3}>
+                        {featuredPost.excerpt || featuredPost.content?.substring(0, 200) || ''}
+                      </Text>
+                      <View style={styles.featuredFooter}>
+                        <View style={styles.authorInfo}>
+                          {featuredAuthorPhotoUrl ? (
+                            <Image
+                              source={{ uri: featuredAuthorPhotoUrl }}
+                              style={styles.authorPhoto}
+                            />
+                          ) : (
+                            <View style={styles.authorPlaceholder}>
+                              <Ionicons name="person-outline" size={16} color="#999" />
+                            </View>
+                          )}
+                          <Text style={styles.authorName}>{featuredAuthorName}</Text>
+                        </View>
+                        <Text style={styles.featuredDate}>4 dk okuma</Text>
+                      </View>
                     </View>
-                  </View>
-                </TouchableOpacity>
-              )}
+                  </TouchableOpacity>
+                )
+              })()}
 
               {/* Regular Posts */}
               <View style={styles.postsGrid}>
@@ -149,6 +276,7 @@ export default function BlogScreen() {
           <View style={styles.forumContainer}>
             <View style={styles.forumHeader}>
               <Text style={styles.forumTitle}>Forum Başlıkları</Text>
+<<<<<<< HEAD
               <TouchableOpacity style={styles.newTopicButton}>
                 <Ionicons name="add-circle-outline" size={20} color="#fff" />
                 <Text style={styles.newTopicButtonText}>Yeni Konu Aç</Text>
@@ -165,10 +293,46 @@ export default function BlogScreen() {
             ) : forumTopics.length === 0 ? (
               <View style={styles.centerContainer}>
                 <Text style={styles.errorText}>Henüz forum konusu yok.</Text>
+=======
+              {isLoggedIn && (
+                <TouchableOpacity 
+                  style={styles.newTopicButton}
+                  onPress={() => setShowNewTopicModal(true)}
+                >
+                  <Ionicons name="add-circle-outline" size={20} color="#fff" />
+                  <Text style={styles.newTopicButtonText}>Yeni Konu Aç</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {forumError && (
+              <View style={styles.errorContainer}>
+                <Text style={styles.errorText}>{forumError}</Text>
+              </View>
+            )}
+
+            {forumLoading ? (
+              <View style={styles.centerContainer}>
+                <ActivityIndicator size="large" color="#FF7A00" />
+                <Text style={styles.loadingText}>Yükleniyor...</Text>
+              </View>
+            ) : forumTopics.length === 0 ? (
+              <View style={styles.centerContainer}>
+                <Text style={styles.emptyText}>Henüz forum konusu yok.</Text>
+                {isLoggedIn && (
+                  <TouchableOpacity
+                    style={styles.createTopicButton}
+                    onPress={() => setShowNewTopicModal(true)}
+                  >
+                    <Text style={styles.createTopicButtonText}>İlk Konuyu Aç</Text>
+                  </TouchableOpacity>
+                )}
+>>>>>>> 54916bd44756bae6c6983f36deaeabe677830d61
               </View>
             ) : (
               <View style={styles.forumList}>
                 {forumTopics.map((topic) => {
+<<<<<<< HEAD
                   const authorName = topic.createdUser
                     ? `${topic.createdUser.firstName || ''} ${topic.createdUser.lastName || ''}`.trim() || 'Kullanıcı'
                     : 'Kullanıcı'
@@ -191,6 +355,28 @@ export default function BlogScreen() {
                         <Text style={styles.forumItemTitle}>{topic.title}</Text>
                         <Text style={styles.forumItemMeta}>
                           Başlatan: <Text style={styles.forumItemMetaBold}>{authorName}</Text> · {formatRelativeTime(topic.createdAt)}
+=======
+                  const displayName = isLoggedIn
+                    ? `${topic.createdUser?.firstName || ''} ${topic.createdUser?.lastName || ''}`.trim() || 'Kullanıcı'
+                    : maskName(`${topic.createdUser?.firstName || ''} ${topic.createdUser?.lastName || ''}`.trim())
+                  
+                  return (
+                    <TouchableOpacity
+                      key={topic.id}
+                      style={styles.forumItem}
+                      onPress={() => navigation.navigate('ForumDetail' as never, { id: topic.id } as never)}
+                    >
+                      <View style={styles.forumAvatar}>
+                        <Image
+                          source={{ uri: getProfilePhotoUrl(topic.createdUser) }}
+                          style={styles.forumAvatarImage}
+                        />
+                      </View>
+                      <View style={styles.forumContent}>
+                        <Text style={styles.forumItemTitle}>{topic.title}</Text>
+                        <Text style={styles.forumItemMeta}>
+                          Başlatan: <Text style={styles.forumItemMetaBold}>{displayName}</Text> · {formatRelativeTime(topic.createdAt)}
+>>>>>>> 54916bd44756bae6c6983f36deaeabe677830d61
                         </Text>
                         {topic.blog && (
                           <Text style={styles.forumBlogLink}>
@@ -200,7 +386,11 @@ export default function BlogScreen() {
                         <View style={styles.forumItemStats}>
                           <View style={styles.forumStat}>
                             <Ionicons name="chatbubbles-outline" size={14} color="#666" />
+<<<<<<< HEAD
                             <Text style={styles.forumStatText}>{topic.commentCount || 0} Yorum</Text>
+=======
+                            <Text style={styles.forumStatText}>{topic.comments?.length || 0} Yorum</Text>
+>>>>>>> 54916bd44756bae6c6983f36deaeabe677830d61
                           </View>
                           <View style={styles.forumStat}>
                             <Ionicons name="eye-outline" size={14} color="#666" />
@@ -216,12 +406,131 @@ export default function BlogScreen() {
           </View>
         </ScrollView>
       )}
+
+      {/* New Topic Modal */}
+      <Modal
+        visible={showNewTopicModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => {
+          setShowNewTopicModal(false)
+          setNewTopicTitle('')
+          setNewTopicContent('')
+          setForumError(null)
+        }}
+      >
+        <View style={[styles.modalContainer, { paddingTop: Math.max(insets.top, 0) }]}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Yeni Forum Konusu</Text>
+            <TouchableOpacity
+              style={styles.modalCloseButton}
+              onPress={() => {
+                setShowNewTopicModal(false)
+                setNewTopicTitle('')
+                setNewTopicContent('')
+                setForumError(null)
+              }}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="close" size={getResponsiveSize(22)} color="#666" />
+            </TouchableOpacity>
+          </View>
+          <ScrollView 
+            style={styles.modalContent}
+            contentContainerStyle={styles.modalContentContainer}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            {forumError && (
+              <View style={styles.errorContainer}>
+                <Ionicons name="alert-circle" size={getResponsiveSize(18)} color="#ef4444" />
+                <Text style={styles.errorText}>{forumError}</Text>
+              </View>
+            )}
+            <View style={styles.formGroup}>
+              <View style={styles.labelContainer}>
+                <Ionicons name="create-outline" size={getResponsiveSize(18)} color="#FF7A00" />
+                <Text style={styles.formLabel}>Başlık *</Text>
+              </View>
+              <View style={styles.inputWrapper}>
+                <TextInput
+                  style={styles.formInput}
+                  value={newTopicTitle}
+                  onChangeText={setNewTopicTitle}
+                  placeholder="Konu başlığını girin"
+                  placeholderTextColor="#999"
+                  maxLength={100}
+                />
+                <Text style={styles.charCount}>{newTopicTitle.length}/100</Text>
+              </View>
+            </View>
+            <View style={styles.formGroup}>
+              <View style={styles.labelContainer}>
+                <Ionicons name="document-text-outline" size={getResponsiveSize(18)} color="#FF7A00" />
+                <Text style={styles.formLabel}>İçerik *</Text>
+              </View>
+              <View style={styles.inputWrapper}>
+                <TextInput
+                  style={[styles.formInput, styles.formTextArea]}
+                  value={newTopicContent}
+                  onChangeText={setNewTopicContent}
+                  placeholder="Konu içeriğini detaylı bir şekilde açıklayın..."
+                  placeholderTextColor="#999"
+                  multiline
+                  textAlignVertical="top"
+                  maxLength={2000}
+                />
+                <Text style={styles.charCount}>{newTopicContent.length}/2000</Text>
+              </View>
+            </View>
+            <TouchableOpacity
+              style={[styles.submitTopicButton, (!newTopicTitle.trim() || !newTopicContent.trim() || submittingTopic) && styles.submitTopicButtonDisabled]}
+              onPress={handleCreateTopic}
+              disabled={!newTopicTitle.trim() || !newTopicContent.trim() || submittingTopic}
+              activeOpacity={0.8}
+            >
+              {submittingTopic ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <>
+                  <Ionicons name="checkmark-circle" size={getResponsiveSize(20)} color="#fff" />
+                  <Text style={styles.submitTopicButtonText}>Konu Oluştur</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </ScrollView>
+        </View>
+      </Modal>
     </View>
   )
 }
 
 function BlogCard({ post }: { post: BlogPost }) {
   const navigation = useNavigation()
+  
+  // Get author photo URL
+  // Always use getProfilePhotoUrl to respect user's showGooglePhoto setting
+  const getAuthorPhotoUrl = () => {
+    // If author is an object, use getProfilePhotoUrl to check showGooglePhoto setting
+    if (post.author && typeof post.author === 'object') {
+      return getProfilePhotoUrl(post.author)
+    }
+    
+    // If authorPhoto is provided but author object is not available, use it
+    // (This might happen if backend doesn't send full author object)
+    if (post.authorPhoto) {
+      return post.authorPhoto
+    }
+    
+    // Default avatar if nothing is available
+    return getProfilePhotoUrl(null)
+  }
+  
+  const authorPhotoUrl = getAuthorPhotoUrl()
+  const authorName = typeof post.author === 'string' ? post.author : 
+    (post.author && typeof post.author === 'object' ? 
+      `${post.author.firstName || ''} ${post.author.lastName || ''}`.trim() || 'CatPet' : 
+      'CatPet')
 
   return (
     <TouchableOpacity
@@ -240,7 +549,19 @@ function BlogCard({ post }: { post: BlogPost }) {
           {post.excerpt || post.content?.substring(0, 150) || ''}
         </Text>
         <View style={styles.blogCardFooter}>
-          <Text style={styles.blogCardAuthor}>{post.author || 'CatPet'}</Text>
+          <View style={styles.blogCardAuthorInfo}>
+            {authorPhotoUrl ? (
+              <Image
+                source={{ uri: authorPhotoUrl }}
+                style={styles.blogCardAuthorPhoto}
+              />
+            ) : (
+              <View style={styles.blogCardAuthorPlaceholder}>
+                <Ionicons name="person-outline" size={14} color="#999" />
+              </View>
+            )}
+            <Text style={styles.blogCardAuthor}>{authorName}</Text>
+          </View>
           <Text style={styles.blogCardSeparator}>·</Text>
           <Text style={styles.blogCardReadTime}>4 dk okuma</Text>
         </View>
@@ -459,6 +780,25 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#e5e5e5',
   },
+  blogCardAuthorInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  blogCardAuthorPhoto: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#e5e5e5',
+  },
+  blogCardAuthorPlaceholder: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#e5e5e5',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   blogCardAuthor: {
     fontSize: 12,
     color: '#666',
@@ -548,10 +888,150 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#666',
   },
+<<<<<<< HEAD
   forumBlogLink: {
     fontSize: 11,
+=======
+  forumAvatarImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 24,
+  },
+  forumBlogLink: {
+    fontSize: 12,
+>>>>>>> 54916bd44756bae6c6983f36deaeabe677830d61
     color: '#FF7A00',
     marginTop: 4,
     marginBottom: 8,
   },
+<<<<<<< HEAD
+=======
+  errorContainer: {
+    backgroundColor: '#FEE2E2',
+    padding: getResponsivePadding(12),
+    borderRadius: 10,
+    marginBottom: getResponsivePadding(16),
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: getResponsivePadding(8),
+    borderWidth: 1,
+    borderColor: '#FECACA',
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: '#666',
+  },
+  createTopicButton: {
+    marginTop: 16,
+    backgroundColor: '#FF7A00',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  createTopicButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: getResponsivePadding(20),
+    paddingVertical: getResponsivePadding(16),
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+    backgroundColor: '#fff',
+  },
+  modalTitle: {
+    fontSize: getResponsiveSize(20),
+    fontWeight: '700',
+    color: '#1a1a1a',
+  },
+  modalCloseButton: {
+    width: getResponsiveSize(32),
+    height: getResponsiveSize(32),
+    borderRadius: getResponsiveSize(16),
+    backgroundColor: '#f9f9f9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalContent: {
+    flex: 1,
+  },
+  modalContentContainer: {
+    padding: getResponsivePadding(20),
+    paddingBottom: getResponsivePadding(40),
+  },
+  formGroup: {
+    marginBottom: getResponsivePadding(20),
+  },
+  labelContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: getResponsivePadding(8),
+    marginBottom: getResponsivePadding(10),
+  },
+  formLabel: {
+    fontSize: getResponsiveSize(15),
+    fontWeight: '600',
+    color: '#1a1a1a',
+  },
+  inputWrapper: {
+    position: 'relative',
+  },
+  formInput: {
+    borderWidth: 2,
+    borderColor: '#e5e7eb',
+    borderRadius: 12,
+    padding: getResponsivePadding(14),
+    fontSize: getResponsiveSize(15),
+    backgroundColor: '#fff',
+    color: '#1a1a1a',
+    minHeight: getResponsiveSize(48),
+  },
+  formTextArea: {
+    minHeight: getResponsiveSize(180),
+    paddingTop: getResponsivePadding(14),
+    paddingBottom: getResponsivePadding(30),
+  },
+  charCount: {
+    position: 'absolute',
+    bottom: getResponsivePadding(8),
+    right: getResponsivePadding(12),
+    fontSize: getResponsiveSize(11),
+    color: '#9ca3af',
+  },
+  submitTopicButton: {
+    backgroundColor: '#FF7A00',
+    paddingVertical: getResponsivePadding(16),
+    paddingHorizontal: getResponsivePadding(20),
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: getResponsivePadding(8),
+    marginTop: getResponsivePadding(8),
+    shadowColor: '#FF7A00',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  submitTopicButtonDisabled: {
+    opacity: 0.5,
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  submitTopicButtonText: {
+    color: '#fff',
+    fontSize: getResponsiveSize(16),
+    fontWeight: '700',
+  },
+>>>>>>> 54916bd44756bae6c6983f36deaeabe677830d61
 })

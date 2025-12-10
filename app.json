@@ -4,13 +4,7 @@
     "slug": "catpet-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
-    "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
     "assetBundlePatterns": [
       "**/*"
     ],
@@ -20,16 +14,16 @@
       "infoPlist": {
         "CFBundleURLTypes": [
           {
-            "CFBundleURLSchemes": ["catpet"]
+            "CFBundleURLSchemes": [
+              "catpet"
+            ]
           }
-        ]
+        ],
+        "NSLocalNetworkUsageDescription": "CatPet uygulaması yerel ağdaki backend sunucusuna bağlanmak için ağ erişimine ihtiyaç duyar.",
+        "NSBonjourServices": ["_http._tcp"]
       }
     },
     "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-      },
       "package": "com.catpet.app",
       "intentFilters": [
         {
@@ -40,23 +34,28 @@
               "scheme": "catpet"
             }
           ],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
       ]
     },
-    "web": {
-      "favicon": "./assets/favicon.png"
-    },
+    "web": {},
     "scheme": "catpet",
     "extra": {
-      "apiUrl": "http://localhost:3002",
+      "apiUrl": "http://192.168.5.14:3002",
       "firebaseApiKey": "AIzaSyBWx-EFaZlZi7Wq6nslnSPrqrDZEif4NUo",
       "firebaseAuthDomain": "catpetapp.firebaseapp.com",
       "firebaseProjectId": "catpetapp",
       "firebaseStorageBucket": "catpetapp.firebasestorage.app",
       "firebaseMessagingSenderId": "256950851198",
-      "firebaseAppId": "1:256950851198:web:bdcb5ed2f6a74ae7602a2f"
-    }
+      "firebaseAppId": "1:256950851198:web:bdcb5ed2f6a74ae7602a2f",
+      "googleClientId": "256950851198-tvhlo6ppnb3lltu83c5c7om21nie0014.apps.googleusercontent.com",
+      "googleClientIdIOS": "256950851198-5992njd2gh0h1aac4d9d6ai9vci26grq.apps.googleusercontent.com"
+    },
+    "plugins": [
+      "expo-font"
+    ]
   }
 }
-

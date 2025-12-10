@@ -1,11 +1,33 @@
-import React, { useState } from 'react'
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert } from 'react-native'
+import React, { useState, useMemo } from 'react'
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, ActivityIndicator, Modal, Dimensions } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useAuth } from '../contexts/AuthContext'
 import { useNavigation } from '@react-navigation/native'
+import { useAnimals } from '../hooks/useAnimals'
+import AnimalCard from '../components/AnimalCard'
+import { ANIMAL_TYPE_LABELS } from '../utils/constants'
+import { Ionicons } from '@expo/vector-icons'
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window')
+
+// Responsive helper functions
+const getResponsiveSize = (size: number) => {
+  const scale = SCREEN_WIDTH / 375
+  return Math.round(size * scale)
+}
+
+const getResponsivePadding = (padding: number) => {
+  const scale = SCREEN_WIDTH / 375
+  return Math.max(6, Math.round(padding * scale))
+}
 
 export default function LostAnimalScreen() {
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const navigation = useNavigation()
+  const insets = useSafeAreaInsets()
+  const [selectedType, setSelectedType] = useState<string>('')
+  const [selectedCity, setSelectedCity] = useState<string>('')
+  const [showCreateModal, setShowCreateModal] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
     type: '',
@@ -19,6 +41,28 @@ export default function LostAnimalScreen() {
     phone: '',
   })
 
+  const { animals, loading, error, refetch } = useAnimals({
+    type: selectedType || undefined,
+    city: selectedCity || undefined,
+  })
+
+  // Filter lost animals (in a real app, this would come from backend with a flag)
+  const lostAnimals = useMemo(() => {
+    // For now, we'll show all animals. In production, filter by a 'isLost' flag
+    return animals || []
+  }, [animals])
+
+  if (authLoading) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.centerContainer}>
+          <ActivityIndicator size="large" color="#FF7A00" />
+          <Text style={styles.loadingText}>Yükleniyor...</Text>
+        </View>
+      </View>
+    )
+  }
+
   const handleSubmit = () => {
     if (!formData.name || !formData.type || !formData.city) {
       Alert.alert('Hata', 'Lütfen zorunlu alanları doldurun')
@@ -26,23 +70,110 @@ export default function LostAnimalScreen() {
     }
     // TODO: API call to create lost animal
     Alert.alert('Başarılı', 'Kayıp hayvan ilanı oluşturuldu')
-  }
-
-  if (!user) {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.errorText}>Giriş yapmanız gerekiyor</Text>
-      </View>
-    )
+    setShowCreateModal(false)
+    setFormData({
+      name: '',
+      type: '',
+      breed: '',
+      age: '',
+      features: '',
+      city: '',
+      address: '',
+      date: '',
+      time: '',
+      phone: '',
+    })
   }
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.title}>Kayıp Hayvan İlanı Oluştur</Text>
-        <Text style={styles.subtitle}>
-          Kayıp dostunuzu bulmak için topluluğumuzdan yardım alın
-        </Text>
+    <View style={styles.container}>
+      {/* Header */}
+      <View style={[styles.header, { paddingTop: Math.max(insets.top, 20) }]}>
+        <View style={styles.headerContent}>
+          <Text style={styles.title}>Kayıp Hayvan İlanları</Text>
+          <Text style={styles.subtitle}>
+            Kayıp dostlarımızı bulmak için topluluğumuzdan yardım alın. Gördüğünüz hayvanları bildirin.
+          </Text>
+        </View>
+        {user && (
+          <TouchableOpacity
+            style={styles.createButton}
+            onPress={() => setShowCreateModal(true)}
+          >
+            <Ionicons name="add-circle-outline" size={getResponsiveSize(18)} color="#fff" />
+            <Text style={styles.createButtonText}>Yeni İlan Oluştur</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+
+
+      {/* Content */}
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {loading ? (
+          <View style={styles.centerContainer}>
+            <ActivityIndicator size="large" color="#FF7A00" />
+            <Text style={styles.loadingText}>Yükleniyor...</Text>
+          </View>
+        ) : error ? (
+          <View style={styles.centerContainer}>
+            <Text style={styles.errorText}>{error}</Text>
+            <TouchableOpacity style={styles.retryButton} onPress={() => refetch()}>
+              <Text style={styles.retryButtonText}>Tekrar Dene</Text>
+            </TouchableOpacity>
+          </View>
+        ) : lostAnimals.length === 0 ? (
+          <View style={styles.centerContainer}>
+            <Text style={styles.emptyText}>Henüz kayıp ilan bulunmamaktadır.</Text>
+            {user && (
+              <TouchableOpacity
+                style={styles.createButton}
+                onPress={() => setShowCreateModal(true)}
+              >
+                <Text style={styles.createButtonText}>İlk İlanı Oluştur</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        ) : (
+          <View style={styles.cardsContainer}>
+            {lostAnimals.map((animal) => (
+              <AnimalCard key={animal.id} animal={animal} />
+            ))}
+          </View>
+        )}
+      </ScrollView>
+
+      {/* Create Modal */}
+      <Modal
+        visible={showCreateModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => {
+          setShowCreateModal(false)
+          setFormData({
+            name: '',
+            type: '',
+            breed: '',
+            age: '',
+            features: '',
+            city: '',
+            address: '',
+            date: '',
+            time: '',
+            phone: '',
+          })
+        }}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Kayıp Hayvan İlanı Oluştur</Text>
+            <TouchableOpacity onPress={() => setShowCreateModal(false)}>
+              <Ionicons name="close" size={24} color="#666" />
+            </TouchableOpacity>
+          </View>
+          <ScrollView style={styles.modalContent}>
+            <Text style={styles.modalSubtitle}>
+              Kayıp dostunuzu bulmak için topluluğumuzdan yardım alın
+            </Text>
 
         {/* Animal Info */}
         <View style={styles.section}>
@@ -169,8 +300,10 @@ export default function LostAnimalScreen() {
         <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
           <Text style={styles.submitButtonText}>İlanı Yayınla</Text>
         </TouchableOpacity>
-      </View>
-    </ScrollView>
+          </ScrollView>
+        </View>
+      </Modal>
+    </View>
   )
 }
 
@@ -179,17 +312,98 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
-  content: {
+  header: {
     padding: 20,
+    paddingBottom: 16,
+  },
+  headerContent: {
+    marginBottom: getResponsivePadding(4),
   },
   title: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 8,
     color: '#1a1a1a',
+    textAlign: 'center',
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  createButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FF7A00',
+    paddingVertical: getResponsivePadding(10),
+    paddingHorizontal: getResponsivePadding(14),
+    borderRadius: getResponsiveSize(8),
+    gap: getResponsivePadding(6),
+  },
+  createButtonText: {
+    color: '#fff',
+    fontSize: getResponsiveSize(13),
+    fontWeight: '600',
+  },
+  content: {
+    flex: 1,
+  },
+  cardsContainer: {
+    padding: 20,
+  },
+  centerContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 40,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: '#666',
+  },
+  retryButton: {
+    marginTop: getResponsivePadding(12),
+    paddingHorizontal: getResponsivePadding(16),
+    paddingVertical: getResponsivePadding(8),
+    borderRadius: getResponsiveSize(8),
+    backgroundColor: '#FF7A00',
+  },
+  retryButtonText: {
+    color: '#fff',
+    fontSize: getResponsiveSize(13),
+    fontWeight: '600',
+  },
+  emptyText: {
+    fontSize: 14,
+    color: '#999',
+    textAlign: 'center',
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e5e5',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#1a1a1a',
+  },
+  modalContent: {
+    flex: 1,
+    padding: 20,
+  },
+  modalSubtitle: {
+    fontSize: 14,
     color: '#666',
     marginBottom: 24,
   },
@@ -225,11 +439,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
-    marginBottom: 16,
+    marginBottom: 12,
   },
   typeButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#ddd',
@@ -240,7 +454,7 @@ const styles = StyleSheet.create({
     borderColor: '#FF7A00',
   },
   typeButtonText: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#666',
   },
   typeButtonTextActive: {
@@ -262,14 +476,15 @@ const styles = StyleSheet.create({
   },
   submitButton: {
     backgroundColor: '#FF7A00',
-    padding: 16,
-    borderRadius: 12,
+    paddingVertical: getResponsivePadding(12),
+    paddingHorizontal: getResponsivePadding(16),
+    borderRadius: getResponsiveSize(10),
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: getResponsivePadding(8),
   },
   submitButtonText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: getResponsiveSize(14),
     fontWeight: '600',
   },
   errorText: {

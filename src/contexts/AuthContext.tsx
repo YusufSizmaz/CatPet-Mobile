@@ -8,7 +8,7 @@ import {
   updateProfile,
 } from 'firebase/auth'
 import { auth } from '../services/firebase'
-import { authAPI } from '../services/api'
+import { authAPI, usersAPI } from '../services/api'
 import { signInWithGoogle } from '../services/googleAuth'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { User } from '../types/user.types'
@@ -32,14 +32,52 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   // Sync Firebase user with backend
-  const syncUserWithBackend = async (firebaseUser: FirebaseUser) => {
+  const syncUserWithBackend = async (firebaseUser: FirebaseUser, userData?: { firstName?: string; lastName?: string }) => {
     try {
       const idToken = await firebaseUser.getIdToken()
-      const userData = await authAPI.verifyToken(idToken)
-      setBackendUser(userData)
+      const backendUserData = await authAPI.verifyToken(idToken)
+      setBackendUser(backendUserData)
       await AsyncStorage.setItem('authToken', idToken)
-    } catch (error) {
-      console.error('Backend sync error:', error)
+      
+      // If firstName/lastName provided and backend user doesn't have them, update
+      if (userData && backendUserData && backendUserData.id) {
+        const needsUpdate = 
+          (userData.firstName && !backendUserData.firstName) || 
+          (userData.lastName && !backendUserData.lastName) ||
+          (userData.firstName && backendUserData.firstName !== userData.firstName) ||
+          (userData.lastName && backendUserData.lastName !== userData.lastName)
+        
+        if (needsUpdate) {
+          try {
+            console.log('📝 Updating user firstName/lastName in backend:', { 
+              firstName: userData.firstName, 
+              lastName: userData.lastName 
+            })
+            await usersAPI.update(backendUserData.id, {
+              firstName: userData.firstName || backendUserData.firstName || null,
+              lastName: userData.lastName || backendUserData.lastName || null,
+            }, idToken)
+            // Refresh backend user data
+            const updatedUserData = await authAPI.verifyToken(idToken)
+            setBackendUser(updatedUserData)
+            console.log('✅ User firstName/lastName updated successfully')
+          } catch (updateError) {
+            console.error('❌ Failed to update user firstName/lastName:', updateError)
+          }
+        }
+      }
+    } catch (error: any) {
+      // Backend'e bağlanamazsa sadece debug modda log'la, uygulama çalışmaya devam etsin
+      // Production'da bu hata sessizce handle edilir
+      // console.debug kullanarak daha az görünür hale getiriyoruz
+      console.debug('Backend sync error (non-critical, offline mode):', error?.message || error)
+      // Token'ı yine de kaydet, offline çalışma için
+      try {
+        const idToken = await firebaseUser.getIdToken()
+        await AsyncStorage.setItem('authToken', idToken)
+      } catch (tokenError) {
+        console.debug('Failed to save token:', tokenError)
+      }
     }
   }
 
@@ -74,11 +112,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Failed to update profile:', error)
     }
-    await syncUserWithBackend(userCredential.user)
+    // Sync with backend and pass firstName/lastName to ensure they're saved
+    await syncUserWithBackend(userCredential.user, { firstName, lastName })
   }
 
   const loginWithGoogle = async () => {
     const userCredential = await signInWithGoogle()
+    if (!userCredential) {
+      // User cancelled - silently return
+      return
+    }
     await syncUserWithBackend(userCredential.user)
   }
 
@@ -89,8 +132,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const refreshBackendUser = async () => {
-    if (user) {
-      await syncUserWithBackend(user)
+    if (user && backendUser?.id) {
+      console.log('🔄 Backend kullanıcı bilgileri yenileniyor...')
+      try {
+        const idToken = await user.getIdToken()
+        // Doğrudan usersAPI.getById ile güncel veriyi çek (token ile)
+        const updatedUserData = await usersAPI.getById(backendUser.id, idToken)
+        setBackendUser(updatedUserData)
+        console.log('✅ Backend kullanıcı bilgileri başarıyla yenilendi ve state güncellendi')
+      } catch (error: any) {
+        console.error('❌ Backend kullanıcı bilgileri yenilenirken hata:', error.message)
+        console.error('❌ Hata detayları:', {
+          response: error.response?.data,
+          status: error.response?.status,
+        })
+        // Hata durumunda fallback olarak syncUserWithBackend kullan
+        try {
+          console.log('🔄 Fallback: syncUserWithBackend kullanılıyor...')
+          await syncUserWithBackend(user)
+          console.log('✅ Fallback sync başarılı')
+        } catch (fallbackError: any) {
+          console.error('❌ Fallback sync de başarısız:', fallbackError.message)
+        }
+      }
+    } else if (user) {
+      // Eğer backendUser yoksa, syncUserWithBackend kullan
+      console.log('🔄 Backend kullanıcı bilgileri senkronize ediliyor (ilk kez)...')
+      try {
+        await syncUserWithBackend(user)
+        console.log('✅ Backend kullanıcı bilgileri başarıyla senkronize edildi')
+      } catch (error: any) {
+        console.error('❌ Backend kullanıcı bilgileri senkronize edilirken hata:', error.message)
+      }
     }
   }
 

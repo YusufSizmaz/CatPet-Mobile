@@ -3,12 +3,16 @@ import Constants from 'expo-constants'
 
 const API_URL = Constants.expoConfig?.extra?.apiUrl || process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3002'
 
+// Log API URL for debugging
+console.log('🔗 API URL:', API_URL)
+
 // Create axios instance
 const axiosInstance: AxiosInstance = axios.create({
   baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 5000, // 5 second timeout
 })
 
 // Add token interceptor
@@ -37,10 +41,25 @@ async function fetchAPI<T>(endpoint: string, options?: AxiosRequestConfig): Prom
   } catch (error: any) {
     if (error.response) {
       // Server responded with error status
-      throw new Error(`API Error: ${error.response.status} ${error.response.statusText}`)
+      const status = error.response.status
+      const statusText = error.response.statusText || 'Unknown error'
+      
+      // Handle 401 Unauthorized specifically
+      if (status === 401) {
+        throw new Error(`API Error: 401 Unauthorized - Authentication required`)
+      }
+      
+      throw new Error(`API Error: ${status} ${statusText}`)
     } else if (error.request) {
-      // Request made but no response received
-      throw new Error('API Error: No response received from server')
+      // Request made but no response received (timeout or network error)
+      if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+        const errorMsg = `Backend sunucusuna bağlanılamıyor.\n\nLütfen kontrol edin:\n1. Cep telefonunuz ve bilgisayarınız aynı WiFi ağında mı?\n2. Backend sunucusu ${API_URL} adresinde çalışıyor mu?\n3. Firewall ayarları backend'e erişimi engelliyor mu?`
+        console.error('❌ Backend connection timeout:', errorMsg)
+        throw new Error(errorMsg)
+      }
+      const errorMsg = `Backend sunucusuna bağlanılamıyor.\n\nLütfen kontrol edin:\n1. Cep telefonunuz ve bilgisayarınız aynı WiFi ağında mı?\n2. Backend sunucusu ${API_URL} adresinde çalışıyor mu?`
+      console.error('❌ Backend connection error:', errorMsg)
+      throw new Error(errorMsg)
     } else {
       // Something else happened
       throw new Error(`API Error: ${error.message}`)
@@ -194,20 +213,44 @@ export const authAPI = {
 export const usersAPI = {
   getAll: () => fetchAPI<any[]>('/users', { method: 'GET' }),
   
-  getById: (id: number) => fetchAPI<any>(`/users/${id}`, { method: 'GET' }),
+  getById: (id: number, token?: string) => fetchAPI<any>(`/users/${id}`, {
+    method: 'GET',
+    headers: token ? {
+      'Authorization': `Bearer ${token}`,
+    } : undefined,
+  }),
   
   create: (data: any) => fetchAPI<any>('/users', {
     method: 'POST',
     data,
   }),
   
-  update: (id: number, data: any, token?: string) => fetchAPI<any>(`/users/${id}`, {
-    method: 'PUT',
-    data,
-    headers: token ? {
-      'Authorization': `Bearer ${token}`,
-    } : undefined,
-  }),
+  update: async (id: number, data: any, token?: string) => {
+    console.log('📤 [usersAPI.update] İstek gönderiliyor:', {
+      endpoint: `/users/${id}`,
+      method: 'PUT',
+      data,
+      hasToken: !!token,
+    })
+    try {
+      const result = await fetchAPI<any>(`/users/${id}`, {
+        method: 'PUT',
+        data,
+        headers: token ? {
+          'Authorization': `Bearer ${token}`,
+        } : undefined,
+      })
+      console.log('✅ [usersAPI.update] Başarılı yanıt:', result)
+      return result
+    } catch (error: any) {
+      console.error('❌ [usersAPI.update] Hata:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+      })
+      throw error
+    }
+  },
 }
 
 // User Settings API
@@ -227,11 +270,60 @@ export const userSettingsAPI = {
     }),
 }
 
+<<<<<<< HEAD
 // Forum API
 export const forumAPI = {
   getAllTopics: (blogId?: number, limit?: number) => {
     const params: any = {}
     if (blogId) params.blogId = blogId
+=======
+// Favorites API
+export const favoritesAPI = {
+  toggleFavorite: async (animalId: number, token: string, isFavorite?: boolean) => {
+    return fetchAPI<any>('/favorites/toggle', {
+      method: 'POST',
+      data: { animalId, isFavorite },
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    })
+  },
+  
+  getMyFavorites: async (token: string) => {
+    return fetchAPI<any[]>('/favorites/my-favorites', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    })
+  },
+  
+  checkFavorite: async (animalId: number, token: string) => {
+    return fetchAPI<{ isFavorite: boolean }>(`/favorites/check/${animalId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    })
+  },
+  
+  getMyFavoriteIds: async (token: string) => {
+    return fetchAPI<{ favoriteIds: number[] }>('/favorites/my-favorite-ids', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    })
+  },
+}
+
+// Forum API
+export const forumAPI = {
+  getAllTopics: (blogId?: number, page?: number, limit?: number) => {
+    const params: any = {}
+    if (blogId) params.blogId = blogId
+    if (page) params.page = page
+>>>>>>> 54916bd44756bae6c6983f36deaeabe677830d61
     if (limit) params.limit = limit
     return fetchAPI<any[]>('/forum/topics', {
       method: 'GET',
@@ -263,6 +355,28 @@ export const forumAPI = {
     })
   },
   
+<<<<<<< HEAD
+=======
+  updateComment: async (id: number, data: { content: string }, token: string) => {
+    return fetchAPI<any>(`/forum/comments/${id}`, {
+      method: 'PUT',
+      data,
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    })
+  },
+  
+  deleteComment: async (id: number, token: string) => {
+    return fetchAPI<void>(`/forum/comments/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    })
+  },
+  
+>>>>>>> 54916bd44756bae6c6983f36deaeabe677830d61
   getPopularTopics: (limit?: number) => {
     const params: any = {}
     if (limit) params.limit = limit
@@ -280,6 +394,7 @@ export const forumAPI = {
       params,
     })
   },
+<<<<<<< HEAD
   
   findConversation: async (userId: number, token: string) => {
     return fetchAPI<any[]>(`/messages/conversation/${userId}`, {
@@ -309,6 +424,33 @@ export const lostAnimalsAPI = {
     return fetchAPI<any>('/animals', {
       method: 'POST',
       data,
+=======
+}
+
+// Animals API - Additional endpoints
+export const animalsAPIExtended = {
+  ...animalsAPI,
+  getOwnerPhone: async (id: number, token: string) => {
+    return fetchAPI<any>(`/animals/${id}/owner-phone`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    })
+  },
+  findByOwnerId: async (ownerId: number, token: string) => {
+    return fetchAPI<any[]>(`/animals/owner/${ownerId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    })
+  },
+  updateStatus: async (id: number, isActive: boolean, token: string) => {
+    return fetchAPI<any>(`/animals/${id}/status`, {
+      method: 'PUT',
+      data: { isActive },
+>>>>>>> 54916bd44756bae6c6983f36deaeabe677830d61
       headers: {
         'Authorization': `Bearer ${token}`,
       },
