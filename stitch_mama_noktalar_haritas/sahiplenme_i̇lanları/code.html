@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+
+<html class="light" lang="tr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sahiplenme İlanları</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#2bee6c",
+              "background-light": "#f6f8f6",
+              "background-dark": "#102216",
+              "text-light": "#111813",
+              "text-dark": "#f6f8f6",
+              "text-muted-light": "#61896f",
+              "text-muted-dark": "#9ab7a2",
+              "surface-light": "#ffffff",
+              "surface-dark": "#1a2c20",
+              "surface-muted-light": "#f0f4f2",
+              "surface-muted-dark": "#203a29"
+            },
+            fontFamily: {
+              "display": ["Plus Jakarta Sans", "Noto Sans", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings:
+        'FILL' 0,
+        'wght' 400,
+        'GRAD' 0,
+        'opsz' 24
+      }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-display bg-background-light dark:bg-background-dark">
+<div class="relative flex h-auto min-h-screen w-full flex-col group/design-root overflow-x-hidden">
+<!-- Top App Bar -->
+<header class="sticky top-0 z-10 flex items-center justify-between bg-surface-light/80 dark:bg-surface-dark/80 p-4 pb-2 backdrop-blur-sm">
+<div class="flex size-12 shrink-0 items-center justify-start text-text-light dark:text-text-dark">
+<span class="material-symbols-outlined text-3xl">arrow_back_ios_new</span>
+</div>
+<h1 class="flex-1 text-center text-lg font-bold leading-tight tracking-[-0.015em] text-text-light dark:text-text-dark">Sahiplenme İlanları</h1>
+<div class="flex w-12 items-center justify-end">
+<p class="shrink-0 text-base font-bold leading-normal tracking-[0.015em] text-text-muted-light dark:text-text-muted-dark">Yeni</p>
+</div>
+</header>
+<main class="flex-1">
+<!-- Search Bar -->
+<div class="px-4 py-3">
+<label class="flex min-w-40 h-12 w-full flex-col">
+<div class="flex h-full w-full flex-1 items-stretch rounded-xl">
+<div class="flex items-center justify-center rounded-l-xl border-none bg-surface-muted-light dark:bg-surface-muted-dark pl-4 text-text-muted-light dark:text-text-muted-dark">
+<span class="material-symbols-outlined">search</span>
+</div>
+<input class="form-input h-full min-w-0 flex-1 resize-none overflow-hidden rounded-r-xl border-none bg-surface-muted-light dark:bg-surface-muted-dark px-4 pl-2 text-base font-normal leading-normal text-text-light dark:text-text-dark placeholder:text-text-muted-light dark:placeholder:text-text-muted-dark focus:outline-0 focus:ring-0" placeholder="Hayvan, tür veya şehir ara..." value=""/>
+</div>
+</label>
+</div>
+<!-- Chips / Filters -->
+<div class="flex gap-3 px-4 pb-2 overflow-x-auto">
+<button class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-xl bg-primary pl-4 pr-3">
+<span class="material-symbols-outlined text-text-light text-xl">tune</span>
+<p class="text-sm font-medium leading-normal text-text-light">Filtrele</p>
+</button>
+<button class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-xl bg-surface-muted-light dark:bg-surface-muted-dark pl-3 pr-3 text-text-light dark:text-text-dark">
+<span class="material-symbols-outlined text-xl">pets</span>
+<p class="text-sm font-medium leading-normal">Kedi</p>
+<span class="material-symbols-outlined text-xl">expand_more</span>
+</button>
+<button class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-xl bg-surface-muted-light dark:bg-surface-muted-dark pl-3 pr-3 text-text-light dark:text-text-dark">
+<span class="material-symbols-outlined text-xl">pets</span>
+<p class="text-sm font-medium leading-normal">Köpek</p>
+<span class="material-symbols-outlined text-xl">expand_more</span>
+</button>
+<button class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-xl bg-surface-muted-light dark:bg-surface-muted-dark pl-3 pr-3 text-text-light dark:text-text-dark">
+<span class="material-symbols-outlined text-xl">pin_drop</span>
+<p class="text-sm font-medium leading-normal">Konum</p>
+<span class="material-symbols-outlined text-xl">expand_more</span>
+</button>
+</div>
+<!-- Pet Listing Cards -->
+<div class="flex flex-col gap-2 p-4 pt-4">
+<!-- Card 1 -->
+<div class="w-full overflow-hidden rounded-xl bg-surface-light dark:bg-surface-dark shadow-sm @container">
+<div class="flex flex-col items-stretch justify-start">
+<div class="relative w-full">
+<div class="aspect-video w-full bg-cover bg-center bg-no-repeat" data-alt="A cute white cat with blue eyes looking at the camera." style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDxg2-lQxwwMgY1qgsxgZbeF3ySWqCkFrP6S5bqKiEKbNBYvMVEUg5CvryTh0kfLB3aqfxHwx_rx-idPk6KQHFzXVZAHYYCiFwvt3B4Q3ZFXEUQIAd_CuE3CRDA2pr28iZghn0wpejKSmV5M5Jo8BQXpFPsKZG-i1nOE4jdYKXDtOdQxjpY28Q7GOi5EBSxjidBJetFYjyQpeTrtrI7DWZTvOq1QvrtDy6sR_4uzDrseiKpAc82BJhm9JPgucmQy9a1zFbE0JYf6xU");'></div>
+<button class="absolute top-3 right-3 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-sm">
+<span class="material-symbols-outlined">favorite_border</span>
+</button>
+</div>
+<div class="flex w-full min-w-72 grow flex-col items-stretch justify-center gap-2 p-4">
+<div class="flex items-center justify-between">
+<p class="text-lg font-bold leading-tight tracking-[-0.015em] text-text-light dark:text-text-dark">Pamuk, 2 Yaşında</p>
+<p class="text-sm font-normal leading-normal text-text-muted-light dark:text-text-muted-dark flex items-center gap-1"><span class="material-symbols-outlined text-base">location_on</span> Kadıköy, İstanbul</p>
+</div>
+<p class="text-base font-normal leading-normal text-text-muted-light dark:text-text-muted-dark">Oyun oynamayı seven, cana yakın bir dost. Sahiplenmeyi bekliyor.</p>
+<button class="mt-2 flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg h-11 px-4 bg-primary text-text-light text-base font-bold leading-normal">
+<span class="truncate">Detayları Gör</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="w-full overflow-hidden rounded-xl bg-surface-light dark:bg-surface-dark shadow-sm @container">
+<div class="flex flex-col items-stretch justify-start">
+<div class="relative w-full">
+<div class="aspect-video w-full bg-cover bg-center bg-no-repeat" data-alt="A small brown and black puppy sitting on a wooden floor." style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuA1VphKD1KmU1Nn5t_z6tfUHHXmdwJxpysCeF4G4GNeKIsL0D5NundMf2QHqKXMQ-RZWkyMF8uDY-ClokgCkjB41Ce3ZQkbbQq5Rp_v4hMdc-B5ReYhWDScI48cgHmWqtEA9blcC8rEefL5mqE0lZa7zK7FGhENtYH1aS5AZf9cDSq5gEPZtjCT19PPfJDKskMjlJC2CER8V7PyNnrAvkkibcTjp-ICTQQK2F-SB5pm1mu1R4AaWSKrH9mv5oxsmMw28fl33R5yB7M");'></div>
+<button class="absolute top-3 right-3 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-sm">
+<span class="material-symbols-outlined">favorite_border</span>
+</button>
+</div>
+<div class="flex w-full min-w-72 grow flex-col items-stretch justify-center gap-2 p-4">
+<div class="flex items-center justify-between">
+<p class="text-lg font-bold leading-tight tracking-[-0.015em] text-text-light dark:text-text-dark">Karabaş, 3 Aylık</p>
+<p class="text-sm font-normal leading-normal text-text-muted-light dark:text-text-muted-dark flex items-center gap-1"><span class="material-symbols-outlined text-base">location_on</span> Beşiktaş, İstanbul</p>
+</div>
+<p class="text-base font-normal leading-normal text-text-muted-light dark:text-text-muted-dark">Enerjik ve sevecen bir yavru. Yeni ailesini arıyor.</p>
+<button class="mt-2 flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg h-11 px-4 bg-primary text-text-light text-base font-bold leading-normal">
+<span class="truncate">Detayları Gör</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="w-full overflow-hidden rounded-xl bg-surface-light dark:bg-surface-dark shadow-sm @container">
+<div class="flex flex-col items-stretch justify-start">
+<div class="relative w-full">
+<div class="aspect-video w-full bg-cover bg-center bg-no-repeat" data-alt="A fluffy ginger cat sleeping on a comfy chair." style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAunPUsqqdMgzfsmfnZzxFjTEn64fr8lNMWAQb3loCuwNAcW1Ap1RSIe_RFoTBgECbDdW2zjI4mmEKX9S_001_-8PUU5eTbPEzJ-0o3EQu_JnqvF71PIQcj44ibl0uM1qhPE_Ca-avnmz9EhH79yibpDdADD5V8E5pfbHSO0yI0tDjhQyEJixRblLiQuVRgUMa_Wvy5I3LqbT9LusdiQEuEyEcsjVXpxqMAjfZn-D0Kzni23ReX59awghk5_8wL2e2pFgV0BccgaHw");'></div>
+<button class="absolute top-3 right-3 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-sm">
+<span class="material-symbols-outlined">favorite_border</span>
+</button>
+</div>
+<div class="flex w-full min-w-72 grow flex-col items-stretch justify-center gap-2 p-4">
+<div class="flex items-center justify-between">
+<p class="text-lg font-bold leading-tight tracking-[-0.015em] text-text-light dark:text-text-dark">Tarçın, 1 Yaşında</p>
+<p class="text-sm font-normal leading-normal text-text-muted-light dark:text-text-muted-dark flex items-center gap-1"><span class="material-symbols-outlined text-base">location_on</span> Çankaya, Ankara</p>
+</div>
+<p class="text-base font-normal leading-normal text-text-muted-light dark:text-text-muted-dark">Uykucu ve sakin bir kedi. Huzurlu bir yuva arıyor.</p>
+<button class="mt-2 flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg h-11 px-4 bg-primary text-text-light text-base font-bold leading-normal">
+<span class="truncate">Detayları Gör</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

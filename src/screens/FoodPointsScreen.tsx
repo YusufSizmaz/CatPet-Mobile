@@ -1,23 +1,37 @@
 import React, { useState } from 'react'
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, TextInput, ActivityIndicator } from 'react-native'
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, TextInput, ActivityIndicator, Alert, Picker } from 'react-native'
 import { useFoodPoints } from '../hooks/useFoodPoints'
 import { FoodPoint } from '../types/food-point.types'
 import { FOOD_POINT_TYPE_LABELS } from '../utils/constants'
 import { Ionicons } from '@expo/vector-icons'
 import FoodPointMap from '../components/FoodPointMap'
+import { useAuth } from '../contexts/AuthContext'
+import { foodPointsAPI } from '../services/api'
+import { TURKEY_CITIES } from '../utils/turkeyCities'
 
 export default function FoodPointsScreen() {
+  const { user } = useAuth()
   const [selectedType, setSelectedType] = useState<string>('')
   const [selectedAnimalType, setSelectedAnimalType] = useState<string>('')
   const [showActiveOnly, setShowActiveOnly] = useState(true)
   const [showNeedsFood, setShowNeedsFood] = useState(false)
   const [selectedPointId, setSelectedPointId] = useState<number | undefined>()
   const [showFilters, setShowFilters] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
+  const [selectedCity, setSelectedCity] = useState<string>('')
+  const [showAddModal, setShowAddModal] = useState(false)
+  const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(null)
+  const [formData, setFormData] = useState({
+    name: '',
+    type: 'feeding' as 'feeding' | 'supply',
+    address: '',
+    city: '',
+    animalType: 'all' as 'all' | 'cat' | 'dog',
+  })
+  const [submitting, setSubmitting] = useState(false)
 
   const { foodPoints, loading, error } = useFoodPoints({
     type: selectedType ? (selectedType as 'feeding' | 'supply') : undefined,
-    city: searchQuery || undefined,
+    city: selectedCity || undefined,
     isActive: showActiveOnly ? true : undefined,
     needsFood: showNeedsFood ? true : undefined,
   })
@@ -29,7 +43,18 @@ export default function FoodPointsScreen() {
         <FoodPointMap
           foodPoints={foodPoints}
           selectedPointId={selectedPointId}
+          selectedCity={selectedCity}
+          isAuthenticated={!!user}
           onPointClick={(point) => setSelectedPointId(point.id)}
+          onMapClick={(lng, lat) => {
+            if (!user) {
+              Alert.alert('Giriş Gerekli', 'Konum seçmek için lütfen giriş yapın.')
+              return
+            }
+            setSelectedLocation({ lat, lng })
+            setSelectedPointId(undefined)
+          }}
+          selectedLocation={selectedLocation}
         />
       </View>
 
@@ -73,7 +98,214 @@ export default function FoodPointsScreen() {
             ))
           )}
         </ScrollView>
+        <View style={styles.bottomSheetFooter}>
+          {!user ? (
+            <>
+              <TouchableOpacity
+                style={[styles.addButton, styles.addButtonDisabled]}
+                onPress={() => {
+                  Alert.alert('Giriş Gerekli', 'Yeni nokta eklemek için lütfen giriş yapın.')
+                }}
+              >
+                <Ionicons name="lock-closed-outline" size={20} color="#999" />
+                <Text style={styles.addButtonTextDisabled}>Giriş Yaparak Nokta Ekle</Text>
+              </TouchableOpacity>
+              <Text style={styles.footerHint}>
+                Yeni nokta eklemek için giriş yapmanız gerekmektedir
+              </Text>
+            </>
+          ) : (
+            <>
+              <TouchableOpacity
+                style={[styles.addButton, !selectedLocation && styles.addButtonDisabled]}
+                onPress={() => {
+                  if (!selectedLocation) {
+                    Alert.alert('Konum Seçin', 'Lütfen önce haritada bir konum seçin.')
+                    return
+                  }
+                  setShowAddModal(true)
+                }}
+                disabled={!selectedLocation}
+              >
+                <Ionicons name="add-circle-outline" size={20} color={selectedLocation ? "#fff" : "#999"} />
+                <Text style={[styles.addButtonText, !selectedLocation && styles.addButtonTextDisabled]}>
+                  Yeni Nokta Ekle
+                </Text>
+              </TouchableOpacity>
+              {!selectedLocation && (
+                <Text style={styles.footerHint}>
+                  Önce haritada bir konum seçin
+                </Text>
+              )}
+            </>
+          )}
+        </View>
       </View>
+
+      {/* Add Food Point Modal */}
+      <Modal
+        visible={showAddModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => {
+          setShowAddModal(false)
+          setFormData({
+            name: '',
+            type: 'feeding',
+            address: '',
+            city: '',
+            animalType: 'all',
+          })
+        }}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Yeni Mama Noktası Ekle</Text>
+            <TouchableOpacity onPress={() => {
+              setShowAddModal(false)
+              setFormData({
+                name: '',
+                type: 'feeding',
+                address: '',
+                city: '',
+                animalType: 'all',
+              })
+            }}>
+              <Ionicons name="close" size={24} color="#666" />
+            </TouchableOpacity>
+          </View>
+          <ScrollView style={styles.modalContent}>
+            <View style={styles.formSection}>
+              <Text style={styles.formLabel}>Nokta Adı *</Text>
+              <TextInput
+                style={styles.formInput}
+                placeholder="Örn: Park Besleme Noktası"
+                value={formData.name}
+                onChangeText={(text) => setFormData({ ...formData, name: text })}
+              />
+            </View>
+
+            <View style={styles.formSection}>
+              <Text style={styles.formLabel}>Nokta Türü *</Text>
+              <View style={styles.selectContainer}>
+                <Picker
+                  selectedValue={formData.type}
+                  onValueChange={(value) => setFormData({ ...formData, type: value })}
+                  style={styles.picker}
+                >
+                  <Picker.Item label="Besleme Noktası" value="feeding" />
+                  <Picker.Item label="Mama Temin Noktası" value="supply" />
+                </Picker>
+              </View>
+            </View>
+
+            <View style={styles.formSection}>
+              <Text style={styles.formLabel}>Şehir *</Text>
+              <View style={styles.selectContainer}>
+                <Picker
+                  selectedValue={formData.city}
+                  onValueChange={(value) => setFormData({ ...formData, city: value })}
+                  style={styles.picker}
+                >
+                  <Picker.Item label="Şehir Seçin" value="" />
+                  {TURKEY_CITIES.map((city) => (
+                    <Picker.Item key={city} label={city} value={city} />
+                  ))}
+                </Picker>
+              </View>
+            </View>
+
+            <View style={styles.formSection}>
+              <Text style={styles.formLabel}>Adres</Text>
+              <TextInput
+                style={styles.formInput}
+                placeholder="Detaylı adres bilgisi"
+                value={formData.address}
+                onChangeText={(text) => setFormData({ ...formData, address: text })}
+                multiline
+                numberOfLines={3}
+              />
+            </View>
+
+            <View style={styles.formSection}>
+              <Text style={styles.formLabel}>Hayvan Türü</Text>
+              <View style={styles.selectContainer}>
+                <Picker
+                  selectedValue={formData.animalType}
+                  onValueChange={(value) => setFormData({ ...formData, animalType: value })}
+                  style={styles.picker}
+                >
+                  <Picker.Item label="Tümü" value="all" />
+                  <Picker.Item label="Kedi" value="cat" />
+                  <Picker.Item label="Köpek" value="dog" />
+                </Picker>
+              </View>
+            </View>
+
+            {selectedLocation && (
+              <View style={styles.formSection}>
+                <Text style={styles.formLabel}>Seçilen Konum</Text>
+                <Text style={styles.locationText}>
+                  Lat: {selectedLocation.lat.toFixed(6)}, Lng: {selectedLocation.lng.toFixed(6)}
+                </Text>
+              </View>
+            )}
+
+            <TouchableOpacity
+              style={[styles.submitButton, submitting && styles.submitButtonDisabled]}
+              onPress={async () => {
+                if (!formData.name || !formData.city || !selectedLocation) {
+                  Alert.alert('Eksik Bilgi', 'Lütfen tüm zorunlu alanları doldurun.')
+                  return
+                }
+
+                if (!user) {
+                  Alert.alert('Giriş Gerekli', 'Yeni nokta eklemek için lütfen giriş yapın.')
+                  return
+                }
+
+                setSubmitting(true)
+                try {
+                  const idToken = await user.getIdToken()
+                  await foodPointsAPI.create({
+                    name: formData.name,
+                    type: formData.type,
+                    latitude: selectedLocation.lat,
+                    longitude: selectedLocation.lng,
+                    address: formData.address,
+                    city: formData.city,
+                    animalType: formData.animalType,
+                    isActive: true,
+                    needsFood: false,
+                  }, idToken)
+
+                  Alert.alert('Başarılı', 'Mama noktası başarıyla eklendi!')
+                  setShowAddModal(false)
+                  setFormData({
+                    name: '',
+                    type: 'feeding',
+                    address: '',
+                    city: '',
+                    animalType: 'all',
+                  })
+                  setSelectedLocation(null)
+                } catch (error: any) {
+                  Alert.alert('Hata', error.message || 'Nokta eklenirken bir hata oluştu.')
+                } finally {
+                  setSubmitting(false)
+                }
+              }}
+              disabled={submitting}
+            >
+              {submitting ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <Text style={styles.submitButtonText}>Kaydet</Text>
+              )}
+            </TouchableOpacity>
+          </ScrollView>
+        </View>
+      </Modal>
 
       {/* Filters Modal */}
       <Modal
@@ -90,17 +322,20 @@ export default function FoodPointsScreen() {
             </TouchableOpacity>
           </View>
           <ScrollView style={styles.modalContent}>
-            {/* Search */}
+            {/* City Selection */}
             <View style={styles.filterSection}>
-              <Text style={styles.filterSectionTitle}>Ara</Text>
-              <View style={styles.searchContainer}>
-                <Ionicons name="search-outline" size={20} color="#666" />
-                <TextInput
-                  style={styles.searchInput}
-                  placeholder="Konum, şehir veya adres ara..."
-                  value={searchQuery}
-                  onChangeText={setSearchQuery}
-                />
+              <Text style={styles.filterSectionTitle}>Şehir</Text>
+              <View style={styles.selectContainer}>
+                <Picker
+                  selectedValue={selectedCity}
+                  onValueChange={(value) => setSelectedCity(value)}
+                  style={styles.picker}
+                >
+                  <Picker.Item label="Tüm Şehirler" value="" />
+                  {TURKEY_CITIES.map((city) => (
+                    <Picker.Item key={city} label={city} value={city} />
+                  ))}
+                </Picker>
               </View>
             </View>
 
@@ -542,5 +777,81 @@ const styles = StyleSheet.create({
   checkboxLabel: {
     fontSize: 14,
     color: '#1a1a1a',
+  },
+  bottomSheetFooter: {
+    padding: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#e5e5e5',
+  },
+  addButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FF7A00',
+    paddingVertical: 14,
+    borderRadius: 12,
+    gap: 8,
+  },
+  addButtonDisabled: {
+    backgroundColor: '#f9f9f9',
+    borderWidth: 1,
+    borderColor: '#e5e5e5',
+  },
+  addButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  addButtonTextDisabled: {
+    color: '#999',
+  },
+  footerHint: {
+    fontSize: 12,
+    color: '#999',
+    textAlign: 'center',
+    marginTop: 8,
+  },
+  picker: {
+    width: '100%',
+  },
+  formSection: {
+    marginBottom: 20,
+  },
+  formLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1a1a1a',
+    marginBottom: 8,
+  },
+  formInput: {
+    backgroundColor: '#f9f9f9',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 14,
+    color: '#1a1a1a',
+    borderWidth: 1,
+    borderColor: '#e5e5e5',
+  },
+  locationText: {
+    fontSize: 12,
+    color: '#666',
+    fontFamily: 'monospace',
+  },
+  submitButton: {
+    backgroundColor: '#FF7A00',
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 20,
+    marginBottom: 20,
+  },
+  submitButtonDisabled: {
+    opacity: 0.6,
+  },
+  submitButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 })

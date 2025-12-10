@@ -5,13 +5,21 @@ import { FoodPoint } from '../types/food-point.types'
 interface FoodPointMapProps {
   foodPoints: FoodPoint[]
   selectedPointId?: number
+  selectedCity?: string
+  isAuthenticated?: boolean
   onPointClick?: (point: FoodPoint) => void
+  onMapClick?: (lng: number, lat: number) => void
+  selectedLocation?: { lng: number; lat: number } | null
 }
 
 export default function FoodPointMap({
   foodPoints,
   selectedPointId,
+  selectedCity,
+  isAuthenticated = false,
   onPointClick,
+  onMapClick,
+  selectedLocation,
 }: FoodPointMapProps) {
   const mapRef = useRef<any>(null)
 

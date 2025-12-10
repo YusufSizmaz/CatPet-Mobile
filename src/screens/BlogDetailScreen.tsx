@@ -2,6 +2,7 @@ import React from 'react'
 import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, ActivityIndicator, Share } from 'react-native'
 import { useRoute, useNavigation } from '@react-navigation/native'
 import { useBlogPost } from '../hooks/useBlog'
+import { cleanImageUrl } from '../utils/imageUtils'
 import { Ionicons } from '@expo/vector-icons'
 
 export default function BlogDetailScreen() {
@@ -45,7 +46,12 @@ export default function BlogDetailScreen() {
   return (
     <ScrollView style={styles.container}>
       {post.coverImage && (
-        <Image source={{ uri: post.coverImage }} style={styles.coverImage} resizeMode="cover" />
+        <Image
+          source={{ uri: cleanImageUrl(post.coverImage) }}
+          style={styles.coverImage}
+          resizeMode="cover"
+          onError={() => {}}
+        />
       )}
       <View style={styles.content}>
         <View style={styles.categoryBadge}>
@@ -56,7 +62,11 @@ export default function BlogDetailScreen() {
         <View style={styles.meta}>
           <View style={styles.authorInfo}>
             {post.authorPhoto ? (
-              <Image source={{ uri: post.authorPhoto }} style={styles.authorPhoto} />
+              <Image
+                source={{ uri: cleanImageUrl(post.authorPhoto) }}
+                style={styles.authorPhoto}
+                onError={() => {}}
+              />
             ) : (
               <View style={styles.authorPlaceholder}>
                 <Ionicons name="person-outline" size={16} color="#999" />

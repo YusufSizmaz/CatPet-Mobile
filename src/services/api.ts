@@ -62,10 +62,33 @@ export const animalsAPI = {
   
   getById: (id: number) => fetchAPI<any>(`/animals/${id}`, { method: 'GET' }),
   
-  create: (data: any) => fetchAPI<any>('/animals', {
-    method: 'POST',
-    data,
-  }),
+  create: async (data: any, token: string) => {
+    return fetchAPI<any>('/animals', {
+      method: 'POST',
+      data,
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    })
+  },
+  
+  getByOwnerId: async (ownerId: number, token: string) => {
+    return fetchAPI<any[]>(`/animals/owner/${ownerId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    })
+  },
+  
+  getOwnerPhone: async (id: number, token: string) => {
+    return fetchAPI<any>(`/animals/${id}/owner-phone`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    })
+  },
   
   update: (id: number, data: any) => fetchAPI<any>(`/animals/${id}`, {
     method: 'PUT',
@@ -90,10 +113,15 @@ export const blogAPI = {
   
   getById: (id: number) => fetchAPI<any>(`/blog/${id}`, { method: 'GET' }),
   
-  create: (data: any) => fetchAPI<any>('/blog', {
-    method: 'POST',
-    data,
-  }),
+  create: async (data: any, token: string) => {
+    return fetchAPI<any>('/blog', {
+      method: 'POST',
+      data,
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    })
+  },
   
   update: (id: number, data: any) => fetchAPI<any>(`/blog/${id}`, {
     method: 'PUT',
@@ -119,10 +147,15 @@ export const foodPointsAPI = {
   
   getById: (id: number) => fetchAPI<any>(`/food-points/${id}`, { method: 'GET' }),
   
-  create: (data: any) => fetchAPI<any>('/food-points', {
-    method: 'POST',
-    data,
-  }),
+  create: async (data: any, token: string) => {
+    return fetchAPI<any>('/food-points', {
+      method: 'POST',
+      data,
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    })
+  },
   
   update: (id: number, data: any) => fetchAPI<any>(`/food-points/${id}`, {
     method: 'PUT',
@@ -192,5 +225,94 @@ export const userSettingsAPI = {
       method: 'PUT',
       data,
     }),
+}
+
+// Forum API
+export const forumAPI = {
+  getAllTopics: (blogId?: number, limit?: number) => {
+    const params: any = {}
+    if (blogId) params.blogId = blogId
+    if (limit) params.limit = limit
+    return fetchAPI<any[]>('/forum/topics', {
+      method: 'GET',
+      params,
+    })
+  },
+  
+  getTopicById: (id: number) => fetchAPI<any>(`/forum/topics/${id}`, { method: 'GET' }),
+  
+  createTopic: async (data: { title: string; content: string; blogId?: number }, token: string) => {
+    return fetchAPI<any>('/forum/topics', {
+      method: 'POST',
+      data,
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    })
+  },
+  
+  getComments: (topicId: number) => fetchAPI<any[]>(`/forum/topics/${topicId}/comments`, { method: 'GET' }),
+  
+  createComment: async (data: { forumId: number; content: string }, token: string) => {
+    return fetchAPI<any>('/forum/comments', {
+      method: 'POST',
+      data,
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    })
+  },
+  
+  getPopularTopics: (limit?: number) => {
+    const params: any = {}
+    if (limit) params.limit = limit
+    return fetchAPI<any[]>('/forum/topics/popular', {
+      method: 'GET',
+      params,
+    })
+  },
+  
+  getActiveUsers: (limit?: number) => {
+    const params: any = {}
+    if (limit) params.limit = limit
+    return fetchAPI<any[]>('/forum/users/active', {
+      method: 'GET',
+      params,
+    })
+  },
+  
+  findConversation: async (userId: number, token: string) => {
+    return fetchAPI<any[]>(`/messages/conversation/${userId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    })
+  },
+}
+
+// Lost Animals API (Kayıp İlanlar - animals endpoint'i kullanılıyor)
+export const lostAnimalsAPI = {
+  getAll: (type?: string, city?: string) => {
+    return fetchAPI<any[]>('/animals', {
+      method: 'GET',
+      params: {
+        ...(type && { type }),
+        ...(city && { city }),
+      },
+    })
+  },
+  
+  getById: (id: number) => fetchAPI<any>(`/animals/${id}`, { method: 'GET' }),
+  
+  create: async (data: any, token: string) => {
+    return fetchAPI<any>('/animals', {
+      method: 'POST',
+      data,
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    })
+  },
 }
 

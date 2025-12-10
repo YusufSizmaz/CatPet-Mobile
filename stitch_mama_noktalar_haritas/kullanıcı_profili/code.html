@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+
+<html class="light" lang="tr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Kullanıcı Profili</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#FF7D40",
+            "background-light": "#FEFCF9",
+            "background-dark": "#102216",
+          },
+          fontFamily: {
+            "display": ["Plus Jakarta Sans", "Noto Sans", "sans-serif"]
+          },
+          borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark">
+<div class="relative flex h-auto min-h-screen w-full flex-col bg-background-light dark:bg-background-dark group/design-root overflow-x-hidden font-display">
+<!-- Top App Bar -->
+<div class="flex items-center bg-background-light dark:bg-background-dark p-4 pb-2 justify-between sticky top-0 z-10">
+<div class="flex size-12 shrink-0 items-center">
+<!-- Back Icon Placeholder -->
+</div>
+<h2 class="text-[#111813] dark:text-white text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center">Profilim</h2>
+<div class="flex w-12 items-center justify-end">
+<button class="flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 bg-transparent text-[#111813] dark:text-white gap-2 text-base font-bold leading-normal tracking-[0.015em] min-w-0 p-0">
+<span class="material-symbols-outlined text-[#111813] dark:text-white" style="font-size: 24px;">settings</span>
+</button>
+</div>
+</div>
+<!-- Profile Header -->
+<div class="flex p-4 @container">
+<div class="flex w-full flex-col gap-4 items-center">
+<div class="flex gap-4 flex-col items-center">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full min-h-32 w-32 border-2 border-primary/50" data-alt="User profile picture of a woman with curly hair smiling" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCGAR04YklR70blzIyJLp_t_XlM7IIsB22eBNj7PbaLomTzpH4XpbsAdqlrxlDYDuN5f4lMo49wVxeiLc055BlSgts6vQx4iKGsmXnHvM9qoYIG7NeYH_XtORSLmxPW199oduf1pXNi85cKK0gNZrlaFeBRo8mfhedFOvQHuPxTWGnbpRzf_oo4YiPYxyrL7cmNsOM4OrQLAkHsQdj0ISxonlrmLXN3GjFrBZAsVJrRoJu_8IrQKAqOlg-TNrvQ3xSEgkPwq6RbuoI");'></div>
+<div class="flex flex-col items-center justify-center">
+<p class="text-[#111813] dark:text-white text-[22px] font-bold leading-tight tracking-[-0.015em] text-center">Elif Yılmaz</p>
+<p class="text-[#757575] dark:text-gray-400 text-base font-normal leading-normal text-center">@elifyilmaz</p>
+</div>
+</div>
+<button class="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold leading-normal tracking-[0.015em] w-full max-w-[240px] @[480px]:w-auto">
+<span class="truncate">Profili Düzenle</span>
+</button>
+</div>
+</div>
+<!-- Profile Stats -->
+<div class="flex flex-wrap gap-3 px-4 py-3">
+<div class="flex min-w-[111px] flex-1 basis-[fit-content] flex-col gap-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-black/20 p-3 items-center text-center">
+<p class="text-[#111813] dark:text-white tracking-light text-2xl font-bold leading-tight">12</p>
+<div class="flex items-center gap-2">
+<p class="text-[#757575] dark:text-gray-400 text-sm font-normal leading-normal">Besleme Noktası</p>
+</div>
+</div>
+<div class="flex min-w-[111px] flex-1 basis-[fit-content] flex-col gap-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-black/20 p-3 items-center text-center">
+<p class="text-[#111813] dark:text-white tracking-light text-2xl font-bold leading-tight">5</p>
+<div class="flex items-center gap-2">
+<p class="text-[#757575] dark:text-gray-400 text-sm font-normal leading-normal">Sahiplenme</p>
+</div>
+</div>
+<div class="flex min-w-[111px] flex-1 basis-[fit-content] flex-col gap-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-black/20 p-3 items-center text-center">
+<p class="text-[#111813] dark:text-white tracking-light text-2xl font-bold leading-tight">3</p>
+<div class="flex items-center gap-2">
+<p class="text-[#757575] dark:text-gray-400 text-sm font-normal leading-normal">Blog Yazısı</p>
+</div>
+</div>
+</div>
+<!-- Tabs -->
+<div class="pb-3 sticky top-[72px] bg-background-light dark:bg-background-dark z-10">
+<div class="flex border-b border-gray-200 dark:border-gray-700 px-4 justify-between">
+<a class="flex flex-col items-center justify-center border-b-[3px] border-b-primary text-primary pb-[13px] pt-4 flex-1" href="#">
+<p class="text-sm font-bold leading-normal tracking-[0.015em]">Katkılarım</p>
+</a>
+<a class="flex flex-col items-center justify-center border-b-[3px] border-b-transparent text-[#757575] dark:text-gray-400 pb-[13px] pt-4 flex-1" href="#">
+<p class="text-sm font-bold leading-normal tracking-[0.015em]">Başvurularım</p>
+</a>
+<a class="flex flex-col items-center justify-center border-b-[3px] border-b-transparent text-[#757575] dark:text-gray-400 pb-[13px] pt-4 flex-1" href="#">
+<p class="text-sm font-bold leading-normal tracking-[0.015em]">Yazılarım</p>
+</a>
+</div>
+</div>
+<!-- Cards Section -->
+<div class="flex flex-col gap-4 p-4">
+<!-- Card 1 -->
+<div class="flex items-stretch justify-between gap-4 rounded-xl bg-white dark:bg-black/20 p-4 shadow-[0_2px_8px_rgba(0,0,0,0.05)]">
+<div class="flex flex-[2_2_0px] flex-col gap-4">
+<div class="flex flex-col gap-1">
+<p class="text-[#111813] dark:text-white text-base font-bold leading-tight">Beşiktaş Sahili Mama Noktası</p>
+<p class="text-[#26A69A] dark:text-teal-400 text-sm font-medium leading-normal">Onaylandı - 12.08.2023</p>
+</div>
+<button class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-8 px-4 flex-row-reverse bg-primary/20 text-primary pr-2 gap-1 text-sm font-medium leading-normal w-fit">
+<span class="material-symbols-outlined" style="font-size: 18px;">arrow_forward</span>
+<span class="truncate">Detayları Gör</span>
+</button>
+</div>
+<div class="w-full bg-center bg-no-repeat aspect-square bg-cover rounded-lg flex-1" data-alt="A photo of a cat feeding station on a sunny day by the sea" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDSIZjFUSc_T4dzW_4j80SxoY6eUWSlmd3aa37eCg8YtipXENdJvNx0tsZq_2848dP7cGKXdiLXLKa2xMPNLtkPHY_IE6lDCmD4QJbwgqmirjMZwvJ7_hdWNmtgL3oAXJO0QPijOYTPW0WtQlEG5sagoz6m1IdJnJBKtOVYVGcDVJiejXtme0haZzb8JmIExP9vBasGzASq6DTPOPNgOdAlMuVTRgbyJipJfLWrRsNjCrVrfPzfHz7cosLwVvLnwyEu0Vq_HTIGvsY");'></div>
+</div>
+<!-- Card 2 -->
+<div class="flex items-stretch justify-between gap-4 rounded-xl bg-white dark:bg-black/20 p-4 shadow-[0_2px_8px_rgba(0,0,0,0.05)]">
+<div class="flex flex-[2_2_0px] flex-col gap-4">
+<div class="flex flex-col gap-1">
+<p class="text-[#111813] dark:text-white text-base font-bold leading-tight">Kadıköy Parkı Su Kabı</p>
+<p class="text-[#26A69A] dark:text-teal-400 text-sm font-medium leading-normal">Onaylandı - 05.07.2023</p>
+</div>
+<button class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-8 px-4 flex-row-reverse bg-primary/20 text-primary pr-2 gap-1 text-sm font-medium leading-normal w-fit">
+<span class="material-symbols-outlined" style="font-size: 18px;">arrow_forward</span>
+<span class="truncate">Detayları Gör</span>
+</button>
+</div>
+<div class="w-full bg-center bg-no-repeat aspect-square bg-cover rounded-lg flex-1" data-alt="A photo of a water bowl for animals in a green park" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAf2RWq7lNsrLW2LwA0ioo4Rk_K6lp-V9FWXzQ64R2tntF-iY6-rp1TB_lbpk9n3I4lWVMwLIksmwBmxBfQ_hHc4PT4WjMl_DZ5wM-U_me4773fiPx_-96E1rhWSxgrYjtG23V3N-h7OEQ3AsBty1JoEzrqaJwxqjWHK9R-v6veCl4XMaMBrj1r82y4vgGx1zVc6MbjaEkbQ6iUHxagIxh7rbtDU74-ddnNLvj5VgcXGE8WCi_XDhNHLx5VEBhkKHlAkmivDIlJuBw");'></div>
+</div>
+<!-- Card 3 -->
+<div class="flex items-stretch justify-between gap-4 rounded-xl bg-white dark:bg-black/20 p-4 shadow-[0_2px_8px_rgba(0,0,0,0.05)]">
+<div class="flex flex-[2_2_0px] flex-col gap-4">
+<div class="flex flex-col gap-1">
+<p class="text-[#111813] dark:text-white text-base font-bold leading-tight">Moda İskelesi Yardım Çağrısı</p>
+<p class="text-[#757575] dark:text-gray-400 text-sm font-normal leading-normal">İnceleniyor - 28.06.2023</p>
+</div>
+<button class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-8 px-4 flex-row-reverse bg-primary/20 text-primary pr-2 gap-1 text-sm font-medium leading-normal w-fit">
+<span class="material-symbols-outlined" style="font-size: 18px;">arrow_forward</span>
+<span class="truncate">Detayları Gör</span>
+</button>
+</div>
+<div class="w-full bg-center bg-no-repeat aspect-square bg-cover rounded-lg flex-1" data-alt="A photo of a stray cat looking sad near a ferry port" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuB5JGcec9lkzM8ETjRJOk7Anc5LiGnJsv6Al_SDgoOSzO9taUcsAehqKcTKK7behnLuCrHvm7l6fOoblywkM9knB4oAouTXTcY8y6ivKMchVanmelXKI9yN7q5qMm0i79Yg94hVl9mwKL7Eydirs3cdKRPCmKqwkwMnSmv907nNgpH_nCS6pemBgYI0O3fOp2njOkoLU-mk7WMpxAcJIjNxaHTfjcyiMVB1grpw2-Q6uDQdoI0XFU-lzXYyPPYxqFzdlhxFW9YJPW0");'></div>
+</div>
+</div>
+</div>
+</body></html>

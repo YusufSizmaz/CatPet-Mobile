@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+
+<html class="light" lang="tr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Mobil Giriş Ekranı</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&amp;display=swap" rel="stylesheet"/>
+<script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#FF7043", // Warm Orange
+            "secondary": "#4DB6AC", // Soft Teal
+            "background-light": "#F5F5F5",
+            "background-dark": "#1d1d1d", // Darker gray for better contrast
+            "text-light": "#424242",
+            "text-dark": "#F5F5F5",
+            "subtle-light": "#BDBDBD",
+            "subtle-dark": "#757575",
+          },
+          fontFamily: {
+            "display": ["Plus Jakarta Sans", "sans-serif"]
+          },
+          borderRadius: {
+            "DEFAULT": "0.5rem", // Default rounded
+            "lg": "0.75rem", // Large
+            "xl": "1rem", // Extra Large
+            "full": "9999px"
+          },
+        },
+      },
+    }
+  </script>
+<style>
+    body {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-display">
+<div class="relative flex h-auto min-h-screen w-full flex-col bg-background-light dark:bg-background-dark group/design-root overflow-x-hidden">
+<div class="flex flex-col h-full grow">
+<!-- Logo -->
+<div class="flex justify-center items-center p-4 pt-8">
+<svg aria-label="CatPet Logo" class="h-8 w-auto text-text-light dark:text-text-dark" fill="currentColor" role="img" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm3.5 5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5-1.5-.67-1.5-1.5.67-1.5 1.5-1.5zm-7 0c.83 0 1.5.67 1.5 1.5S9.33 10 8.5 10 7 9.33 7 8.5 7.67 7 8.5 7zm3.5 10.5c-2.33 0-4.31-1.46-5.11-3.5h10.22c-.8 2.04-2.78 3.5-5.11 3.5z"></path>
+</svg>
+</div>
+<!-- Carousel Content -->
+<div class="flex flex-col grow justify-between">
+<!-- Image Section -->
+<div class="w-full">
+<div class="bg-cover bg-center flex flex-col justify-end overflow-hidden aspect-square" data-alt="Illustration of a person kindly tending to a stray cat." style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAHjiCI330pgQxcGhlOKk7P0Z__phBd24ogSvaTMfHnRtuqp3sUVxBQmP4J-PbMfRu5-dm0IH-7sqqxwKnULj_n_dr39zmrQ_heLOANnMksxV0-iwjTc11kgGa7LFvh1WN4wrzgcKRxPHtEZotryoPf04_HbQKBzPgk6ViSEjpcMeDYDoTr4IVF1YEtNh8IwgDivZBNNV8-8braFAHABQvASRh0Vgerf12MV3ztK0BiBQU1BO69yhSDSq2-6zDKggm764Z4kwABfm8");'>
+</div>
+</div>
+<!-- Text and Indicator Section -->
+<div class="flex flex-col items-center px-6 pt-6 pb-2 text-center">
+<div class="flex w-full flex-row items-center justify-center gap-3 py-5">
+<div class="h-2 w-2 rounded-full bg-primary"></div>
+<div class="h-2 w-2 rounded-full bg-subtle-light dark:bg-subtle-dark"></div>
+<div class="h-2 w-2 rounded-full bg-subtle-light dark:bg-subtle-dark"></div>
+</div>
+<h1 class="text-text-light dark:text-text-dark tracking-tight text-3xl font-bold leading-tight pb-3 pt-4">Yardıma İhtiyacı Olan Bir Dost Gör?</h1>
+<p class="text-text-light/80 dark:text-text-dark/80 text-base font-normal leading-normal max-w-sm">Yardıma muhtaç hayvanları bildirerek onlara el uzat, hayatlarını kurtarmana yardımcı olalım.</p>
+</div>
+</div>
+<!-- Action Buttons Section -->
+<div class="w-full px-6 pt-8 pb-10 flex flex-col gap-4">
+<div class="flex">
+<button class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-14 px-5 flex-1 bg-primary text-white text-base font-bold leading-normal tracking-[0.015em]">
+<span class="truncate">Hesap Oluştur</span>
+</button>
+</div>
+<div class="flex">
+<button class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-14 px-5 flex-1 bg-transparent text-primary text-base font-bold leading-normal tracking-[0.015em]">
+<span class="truncate">Giriş Yap</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</body></html>

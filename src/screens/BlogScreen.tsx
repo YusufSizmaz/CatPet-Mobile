@@ -2,7 +2,9 @@ import React, { useState } from 'react'
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, ActivityIndicator } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
 import { useBlog } from '../hooks/useBlog'
+import { useForumTopics } from '../hooks/useForum'
 import { BlogPost } from '../types/blog.types'
+import { formatRelativeTime } from '../utils/formatters'
 import { Ionicons } from '@expo/vector-icons'
 
 const categories = ['all', 'cats', 'dogs', 'birds', 'fish', 'rodents', 'other']
@@ -21,6 +23,7 @@ export default function BlogScreen() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const navigation = useNavigation()
   const { posts, loading, error } = useBlog(selectedCategory === 'all' ? undefined : { category: selectedCategory })
+  const { topics: forumTopics, loading: forumLoading, error: forumError } = useForumTopics()
 
   const featuredPost = posts.length > 0 ? posts[0] : null
   const regularPosts = posts.slice(1)
@@ -151,29 +154,65 @@ export default function BlogScreen() {
                 <Text style={styles.newTopicButtonText}>Yeni Konu Aç</Text>
               </TouchableOpacity>
             </View>
-            <View style={styles.forumList}>
-              {[1, 2, 3].map((i) => (
-                <TouchableOpacity key={i} style={styles.forumItem}>
-                  <View style={styles.forumAvatar} />
-                  <View style={styles.forumContent}>
-                    <Text style={styles.forumItemTitle}>Örnek Forum Konusu {i}</Text>
-                    <Text style={styles.forumItemMeta}>
-                      Başlatan: <Text style={styles.forumItemMetaBold}>Kullanıcı Adı</Text> · {i} saat önce
-                    </Text>
-                    <View style={styles.forumItemStats}>
-                      <View style={styles.forumStat}>
-                        <Ionicons name="chatbubbles-outline" size={14} color="#666" />
-                        <Text style={styles.forumStatText}>{i * 5} Yorum</Text>
+            {forumLoading ? (
+              <View style={styles.centerContainer}>
+                <ActivityIndicator size="large" color="#FF7A00" />
+              </View>
+            ) : forumError ? (
+              <View style={styles.centerContainer}>
+                <Text style={styles.errorText}>{forumError}</Text>
+              </View>
+            ) : forumTopics.length === 0 ? (
+              <View style={styles.centerContainer}>
+                <Text style={styles.errorText}>Henüz forum konusu yok.</Text>
+              </View>
+            ) : (
+              <View style={styles.forumList}>
+                {forumTopics.map((topic) => {
+                  const authorName = topic.createdUser
+                    ? `${topic.createdUser.firstName || ''} ${topic.createdUser.lastName || ''}`.trim() || 'Kullanıcı'
+                    : 'Kullanıcı'
+                  
+                  return (
+                    <TouchableOpacity 
+                      key={topic.id} 
+                      style={styles.forumItem}
+                      onPress={() => navigation.navigate('ForumTopicDetail' as never, { id: topic.id } as never)}
+                    >
+                      {topic.createdUser?.profilePhoto ? (
+                        <Image 
+                          source={{ uri: topic.createdUser.profilePhoto }} 
+                          style={styles.forumAvatar} 
+                        />
+                      ) : (
+                        <View style={styles.forumAvatar} />
+                      )}
+                      <View style={styles.forumContent}>
+                        <Text style={styles.forumItemTitle}>{topic.title}</Text>
+                        <Text style={styles.forumItemMeta}>
+                          Başlatan: <Text style={styles.forumItemMetaBold}>{authorName}</Text> · {formatRelativeTime(topic.createdAt)}
+                        </Text>
+                        {topic.blog && (
+                          <Text style={styles.forumBlogLink}>
+                            İlgili Blog: {topic.blog.title}
+                          </Text>
+                        )}
+                        <View style={styles.forumItemStats}>
+                          <View style={styles.forumStat}>
+                            <Ionicons name="chatbubbles-outline" size={14} color="#666" />
+                            <Text style={styles.forumStatText}>{topic.commentCount || 0} Yorum</Text>
+                          </View>
+                          <View style={styles.forumStat}>
+                            <Ionicons name="eye-outline" size={14} color="#666" />
+                            <Text style={styles.forumStatText}>{topic.views || 0} Görüntülenme</Text>
+                          </View>
+                        </View>
                       </View>
-                      <View style={styles.forumStat}>
-                        <Ionicons name="eye-outline" size={14} color="#666" />
-                        <Text style={styles.forumStatText}>{i * 50} Görüntülenme</Text>
-                      </View>
-                    </View>
-                  </View>
-                </TouchableOpacity>
-              ))}
-            </View>
+                    </TouchableOpacity>
+                  )
+                })}
+              </View>
+            )}
           </View>
         </ScrollView>
       )}
@@ -508,5 +547,11 @@ const styles = StyleSheet.create({
   forumStatText: {
     fontSize: 12,
     color: '#666',
+  },
+  forumBlogLink: {
+    fontSize: 11,
+    color: '#FF7A00',
+    marginTop: 4,
+    marginBottom: 8,
   },
 })

@@ -16,6 +16,8 @@ import RegisterScreen from '../screens/RegisterScreen'
 import AboutScreen from '../screens/AboutScreen'
 import LostAnimalScreen from '../screens/LostAnimalScreen'
 import BlogDetailScreen from '../screens/BlogDetailScreen'
+import ForumTopicDetailScreen from '../screens/ForumTopicDetailScreen'
+import LostAnimalDetailScreen from '../screens/LostAnimalDetailScreen'
 
 const Stack = createNativeStackNavigator()
 const Tab = createBottomTabNavigator()
@@ -89,6 +91,16 @@ export default function AppNavigator() {
               name="BlogDetail" 
               component={BlogDetailScreen}
               options={{ title: 'Blog Yazısı' }}
+            />
+            <Stack.Screen 
+              name="ForumTopicDetail" 
+              component={ForumTopicDetailScreen}
+              options={{ title: 'Forum Konusu' }}
+            />
+            <Stack.Screen 
+              name="LostAnimalDetail" 
+              component={LostAnimalDetailScreen}
+              options={{ title: 'Kayıp İlan Detayı' }}
             />
           </>
         ) : (
