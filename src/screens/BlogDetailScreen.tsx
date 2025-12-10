@@ -91,17 +91,8 @@ export default function BlogDetailScreen() {
         {post.excerpt && <Text style={styles.excerpt}>{post.excerpt}</Text>}
         <View style={styles.meta}>
           <View style={styles.authorInfo}>
-<<<<<<< HEAD
-            {post.authorPhoto ? (
-              <Image
-                source={{ uri: cleanImageUrl(post.authorPhoto) }}
-                style={styles.authorPhoto}
-                onError={() => {}}
-              />
-=======
             {authorPhotoUrl ? (
               <Image source={{ uri: authorPhotoUrl }} style={styles.authorPhoto} />
->>>>>>> 54916bd44756bae6c6983f36deaeabe677830d61
             ) : (
               <View style={styles.authorPlaceholder}>
                 <Ionicons name="person-outline" size={16} color="#999" />

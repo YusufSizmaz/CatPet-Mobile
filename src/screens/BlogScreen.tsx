@@ -63,9 +63,6 @@ export default function BlogScreen() {
   const insets = useSafeAreaInsets()
   const { user, backendUser } = useAuth()
   const { posts, loading, error } = useBlog(selectedCategory === 'all' ? undefined : { category: selectedCategory })
-<<<<<<< HEAD
-  const { topics: forumTopics, loading: forumLoading, error: forumError } = useForumTopics()
-=======
   
   const [forumTopics, setForumTopics] = useState<any[]>([])
   const [forumLoading, setForumLoading] = useState(false)
@@ -75,7 +72,6 @@ export default function BlogScreen() {
   const [newTopicContent, setNewTopicContent] = useState('')
   const [submittingTopic, setSubmittingTopic] = useState(false)
   const forumLoadedRef = useRef<string | null>(null)
->>>>>>> 54916bd44756bae6c6983f36deaeabe677830d61
 
   const featuredPost = posts.length > 0 ? posts[0] : null
   const regularPosts = posts.slice(1)
@@ -276,24 +272,6 @@ export default function BlogScreen() {
           <View style={styles.forumContainer}>
             <View style={styles.forumHeader}>
               <Text style={styles.forumTitle}>Forum Başlıkları</Text>
-<<<<<<< HEAD
-              <TouchableOpacity style={styles.newTopicButton}>
-                <Ionicons name="add-circle-outline" size={20} color="#fff" />
-                <Text style={styles.newTopicButtonText}>Yeni Konu Aç</Text>
-              </TouchableOpacity>
-            </View>
-            {forumLoading ? (
-              <View style={styles.centerContainer}>
-                <ActivityIndicator size="large" color="#FF7A00" />
-              </View>
-            ) : forumError ? (
-              <View style={styles.centerContainer}>
-                <Text style={styles.errorText}>{forumError}</Text>
-              </View>
-            ) : forumTopics.length === 0 ? (
-              <View style={styles.centerContainer}>
-                <Text style={styles.errorText}>Henüz forum konusu yok.</Text>
-=======
               {isLoggedIn && (
                 <TouchableOpacity 
                   style={styles.newTopicButton}
@@ -327,35 +305,10 @@ export default function BlogScreen() {
                     <Text style={styles.createTopicButtonText}>İlk Konuyu Aç</Text>
                   </TouchableOpacity>
                 )}
->>>>>>> 54916bd44756bae6c6983f36deaeabe677830d61
               </View>
             ) : (
               <View style={styles.forumList}>
                 {forumTopics.map((topic) => {
-<<<<<<< HEAD
-                  const authorName = topic.createdUser
-                    ? `${topic.createdUser.firstName || ''} ${topic.createdUser.lastName || ''}`.trim() || 'Kullanıcı'
-                    : 'Kullanıcı'
-                  
-                  return (
-                    <TouchableOpacity 
-                      key={topic.id} 
-                      style={styles.forumItem}
-                      onPress={() => navigation.navigate('ForumTopicDetail' as never, { id: topic.id } as never)}
-                    >
-                      {topic.createdUser?.profilePhoto ? (
-                        <Image 
-                          source={{ uri: topic.createdUser.profilePhoto }} 
-                          style={styles.forumAvatar} 
-                        />
-                      ) : (
-                        <View style={styles.forumAvatar} />
-                      )}
-                      <View style={styles.forumContent}>
-                        <Text style={styles.forumItemTitle}>{topic.title}</Text>
-                        <Text style={styles.forumItemMeta}>
-                          Başlatan: <Text style={styles.forumItemMetaBold}>{authorName}</Text> · {formatRelativeTime(topic.createdAt)}
-=======
                   const displayName = isLoggedIn
                     ? `${topic.createdUser?.firstName || ''} ${topic.createdUser?.lastName || ''}`.trim() || 'Kullanıcı'
                     : maskName(`${topic.createdUser?.firstName || ''} ${topic.createdUser?.lastName || ''}`.trim())
@@ -376,7 +329,6 @@ export default function BlogScreen() {
                         <Text style={styles.forumItemTitle}>{topic.title}</Text>
                         <Text style={styles.forumItemMeta}>
                           Başlatan: <Text style={styles.forumItemMetaBold}>{displayName}</Text> · {formatRelativeTime(topic.createdAt)}
->>>>>>> 54916bd44756bae6c6983f36deaeabe677830d61
                         </Text>
                         {topic.blog && (
                           <Text style={styles.forumBlogLink}>
@@ -386,11 +338,7 @@ export default function BlogScreen() {
                         <View style={styles.forumItemStats}>
                           <View style={styles.forumStat}>
                             <Ionicons name="chatbubbles-outline" size={14} color="#666" />
-<<<<<<< HEAD
-                            <Text style={styles.forumStatText}>{topic.commentCount || 0} Yorum</Text>
-=======
-                            <Text style={styles.forumStatText}>{topic.comments?.length || 0} Yorum</Text>
->>>>>>> 54916bd44756bae6c6983f36deaeabe677830d61
+                            <Text style={styles.forumStatText}>{topic.comments?.length || topic.commentCount || 0} Yorum</Text>
                           </View>
                           <View style={styles.forumStat}>
                             <Ionicons name="eye-outline" size={14} color="#666" />
@@ -888,10 +836,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#666',
   },
-<<<<<<< HEAD
-  forumBlogLink: {
-    fontSize: 11,
-=======
   forumAvatarImage: {
     width: '100%',
     height: '100%',
@@ -899,13 +843,10 @@ const styles = StyleSheet.create({
   },
   forumBlogLink: {
     fontSize: 12,
->>>>>>> 54916bd44756bae6c6983f36deaeabe677830d61
     color: '#FF7A00',
     marginTop: 4,
     marginBottom: 8,
   },
-<<<<<<< HEAD
-=======
   errorContainer: {
     backgroundColor: '#FEE2E2',
     padding: getResponsivePadding(12),
@@ -921,6 +862,10 @@ const styles = StyleSheet.create({
     marginTop: 12,
     fontSize: 14,
     color: '#666',
+  },
+  emptyText: {
+    fontSize: 14,
+    color: '#999',
   },
   createTopicButton: {
     marginTop: 16,
@@ -1033,5 +978,4 @@ const styles = StyleSheet.create({
     fontSize: getResponsiveSize(16),
     fontWeight: '700',
   },
->>>>>>> 54916bd44756bae6c6983f36deaeabe677830d61
 })

@@ -270,13 +270,6 @@ export const userSettingsAPI = {
     }),
 }
 
-<<<<<<< HEAD
-// Forum API
-export const forumAPI = {
-  getAllTopics: (blogId?: number, limit?: number) => {
-    const params: any = {}
-    if (blogId) params.blogId = blogId
-=======
 // Favorites API
 export const favoritesAPI = {
   toggleFavorite: async (animalId: number, token: string, isFavorite?: boolean) => {
@@ -323,7 +316,6 @@ export const forumAPI = {
     const params: any = {}
     if (blogId) params.blogId = blogId
     if (page) params.page = page
->>>>>>> 54916bd44756bae6c6983f36deaeabe677830d61
     if (limit) params.limit = limit
     return fetchAPI<any[]>('/forum/topics', {
       method: 'GET',
@@ -355,8 +347,6 @@ export const forumAPI = {
     })
   },
   
-<<<<<<< HEAD
-=======
   updateComment: async (id: number, data: { content: string }, token: string) => {
     return fetchAPI<any>(`/forum/comments/${id}`, {
       method: 'PUT',
@@ -376,7 +366,6 @@ export const forumAPI = {
     })
   },
   
->>>>>>> 54916bd44756bae6c6983f36deaeabe677830d61
   getPopularTopics: (limit?: number) => {
     const params: any = {}
     if (limit) params.limit = limit
@@ -394,7 +383,6 @@ export const forumAPI = {
       params,
     })
   },
-<<<<<<< HEAD
   
   findConversation: async (userId: number, token: string) => {
     return fetchAPI<any[]>(`/messages/conversation/${userId}`, {
@@ -424,7 +412,11 @@ export const lostAnimalsAPI = {
     return fetchAPI<any>('/animals', {
       method: 'POST',
       data,
-=======
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    })
+  },
 }
 
 // Animals API - Additional endpoints
@@ -450,7 +442,6 @@ export const animalsAPIExtended = {
     return fetchAPI<any>(`/animals/${id}/status`, {
       method: 'PUT',
       data: { isActive },
->>>>>>> 54916bd44756bae6c6983f36deaeabe677830d61
       headers: {
         'Authorization': `Bearer ${token}`,
       },

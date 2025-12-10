@@ -1,10 +1,6 @@
 import React, { useState } from 'react'
-<<<<<<< HEAD
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, TextInput, ActivityIndicator, Alert, Picker } from 'react-native'
-=======
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, TextInput, ActivityIndicator } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
->>>>>>> 54916bd44756bae6c6983f36deaeabe677830d61
 import { useFoodPoints } from '../hooks/useFoodPoints'
 import { FoodPoint } from '../types/food-point.types'
 import { FOOD_POINT_TYPE_LABELS } from '../utils/constants'
@@ -15,11 +11,8 @@ import { foodPointsAPI } from '../services/api'
 import { TURKEY_CITIES } from '../utils/turkeyCities'
 
 export default function FoodPointsScreen() {
-<<<<<<< HEAD
   const { user } = useAuth()
-=======
   const insets = useSafeAreaInsets()
->>>>>>> 54916bd44756bae6c6983f36deaeabe677830d61
   const [selectedType, setSelectedType] = useState<string>('')
   const [selectedAnimalType, setSelectedAnimalType] = useState<string>('')
   const [showActiveOnly, setShowActiveOnly] = useState(true)

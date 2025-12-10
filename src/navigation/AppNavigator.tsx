@@ -20,14 +20,11 @@ import RegisterScreen from '../screens/RegisterScreen'
 import AboutScreen from '../screens/AboutScreen'
 import LostAnimalScreen from '../screens/LostAnimalScreen'
 import BlogDetailScreen from '../screens/BlogDetailScreen'
-<<<<<<< HEAD
 import ForumTopicDetailScreen from '../screens/ForumTopicDetailScreen'
 import LostAnimalDetailScreen from '../screens/LostAnimalDetailScreen'
-=======
 import ForumDetailScreen from '../screens/ForumDetailScreen'
 import OnboardingScreen from '../screens/OnboardingScreen'
 import WelcomeScreen from '../screens/WelcomeScreen'
->>>>>>> 54916bd44756bae6c6983f36deaeabe677830d61
 
 const Stack = createNativeStackNavigator()
 const Tab = createBottomTabNavigator()
@@ -365,12 +362,34 @@ export default function AppNavigator() {
             <Stack.Screen 
               name="ForumTopicDetail" 
               component={ForumTopicDetailScreen}
-              options={{ title: 'Forum Konusu' }}
+              options={{ 
+                title: 'Forum Konusu',
+                headerStyle: {
+                  backgroundColor: '#fff',
+                },
+                headerShadowVisible: false,
+                headerTintColor: '#FF7A00',
+                headerTitleStyle: {
+                  fontWeight: '700',
+                  color: '#1a1a1a',
+                },
+              }}
             />
             <Stack.Screen 
               name="LostAnimalDetail" 
               component={LostAnimalDetailScreen}
-              options={{ title: 'Kayıp İlan Detayı' }}
+              options={{ 
+                title: 'Kayıp İlan Detayı',
+                headerStyle: {
+                  backgroundColor: '#fff',
+                },
+                headerShadowVisible: false,
+                headerTintColor: '#FF7A00',
+                headerTitleStyle: {
+                  fontWeight: '700',
+                  color: '#1a1a1a',
+                },
+              }}
             />
           </>
         ) : (
