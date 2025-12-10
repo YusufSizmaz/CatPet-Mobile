@@ -43,13 +43,23 @@ async function fetchAPI<T>(endpoint: string, options?: AxiosRequestConfig): Prom
       // Server responded with error status
       const status = error.response.status
       const statusText = error.response.statusText || 'Unknown error'
+      const errorData = error.response.data
       
       // Handle 401 Unauthorized specifically
       if (status === 401) {
-        throw new Error(`API Error: 401 Unauthorized - Authentication required`)
+        const message = errorData?.message || 'Giriş yapmanız gerekmektedir.'
+        throw new Error(message)
       }
       
-      throw new Error(`API Error: ${status} ${statusText}`)
+      // Handle validation errors (400 Bad Request)
+      if (status === 400) {
+        const message = errorData?.message || errorData?.error || 'Geçersiz istek. Lütfen tüm alanları kontrol edin.'
+        throw new Error(message)
+      }
+      
+      // Extract error message from response if available
+      const errorMessage = errorData?.message || errorData?.error || statusText
+      throw new Error(errorMessage)
     } else if (error.request) {
       // Request made but no response received (timeout or network error)
       if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {

@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, TextInput, ActivityIndicator, Alert, Picker } from 'react-native'
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, TextInput, ActivityIndicator, Alert } from 'react-native'
+import { Picker } from '@react-native-picker/picker'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useFoodPoints } from '../hooks/useFoodPoints'
 import { FoodPoint } from '../types/food-point.types'
@@ -31,7 +32,7 @@ export default function FoodPointsScreen() {
   })
   const [submitting, setSubmitting] = useState(false)
 
-  const { foodPoints, loading, error } = useFoodPoints({
+  const { foodPoints, loading, error, refetch } = useFoodPoints({
     type: selectedType ? (selectedType as 'feeding' | 'supply') : undefined,
     city: selectedCity || undefined,
     isActive: showActiveOnly ? true : undefined,
@@ -291,6 +292,8 @@ export default function FoodPointsScreen() {
                     animalType: 'all',
                   })
                   setSelectedLocation(null)
+                  // Refresh the food points list
+                  refetch()
                 } catch (error: any) {
                   Alert.alert('Hata', error.message || 'Nokta eklenirken bir hata oluştu.')
                 } finally {

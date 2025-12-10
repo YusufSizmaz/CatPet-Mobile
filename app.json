@@ -20,11 +20,17 @@
           }
         ],
         "NSLocalNetworkUsageDescription": "CatPet uygulaması yerel ağdaki backend sunucusuna bağlanmak için ağ erişimine ihtiyaç duyar.",
+        "NSLocationWhenInUseUsageDescription": "CatPet uygulaması mama noktalarını haritada göstermek ve konumunuzu belirlemek için konum bilgisine ihtiyaç duyar.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "CatPet uygulaması mama noktalarını haritada göstermek ve konumunuzu belirlemek için konum bilgisine ihtiyaç duyar.",
         "NSBonjourServices": ["_http._tcp"]
       }
     },
     "android": {
       "package": "com.catpet.app",
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ],
       "intentFilters": [
         {
           "action": "VIEW",
@@ -44,7 +50,8 @@
     "web": {},
     "scheme": "catpet",
     "extra": {
-      "apiUrl": "http://192.168.5.14:3002",
+      "apiUrl": "http://192.168.5.10:3002",
+      "mapboxAccessToken": "pk.eyJ1IjoieXVzdWZzaXptYXoiLCJhIjoiY21zZ2N1c2EwMDF0YjJrcGJ5Z2N4Z2N4ZyJ9.YourMapboxTokenHere",
       "firebaseApiKey": "AIzaSyBWx-EFaZlZi7Wq6nslnSPrqrDZEif4NUo",
       "firebaseAuthDomain": "catpetapp.firebaseapp.com",
       "firebaseProjectId": "catpetapp",
@@ -55,7 +62,14 @@
       "googleClientIdIOS": "256950851198-5992njd2gh0h1aac4d9d6ai9vci26grq.apps.googleusercontent.com"
     },
     "plugins": [
-      "expo-font"
+      "expo-font",
+      "expo-location",
+      [
+        "@rnmapbox/maps",
+        {
+          "RNMapboxMapsDownloadToken": "pk.eyJ1IjoieXVzdWZzaXptYXoiLCJhIjoiY21zZ2N1c2EwMDF0YjJrcGJ5Z2N4Z2N4ZyJ9.YourMapboxTokenHere"
+        }
+      ]
     ]
   }
 }
